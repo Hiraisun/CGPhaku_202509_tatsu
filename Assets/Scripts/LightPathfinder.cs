@@ -7,6 +7,11 @@ using System.Collections.Generic;
 /// </summary>
 public class LightPathfinder : MonoBehaviour
 {
+    // 数値安定用の閾値
+    private const float EPS_PARALLEL = 1e-9f;
+    private const float EPS_FRONT = 1e-4f;
+    private const float EPS_REFLECT_MATCH = 3e-3f;
+    private const float EPS_SEGMENT = 1e-3f;
     public Transform startPoint;
     public Transform endPoint;
 
@@ -33,7 +38,13 @@ public class LightPathfinder : MonoBehaviour
     /// </summary>
     public void FindPath()
     {
-        if (lastValidPath != null) lastValidPath.Clear();
+        lastValidPath?.Clear();
+        if (startPoint == null || endPoint == null)
+        {
+            lastReachable = false;
+            return;
+        }
+        if (mirrors == null) mirrors = new List<Mirror2D>();
         lastReachable = IsReachable(startPoint.position, endPoint.position, maxReflections, out lastValidPath);
     }
 
@@ -44,8 +55,8 @@ public class LightPathfinder : MonoBehaviour
     public bool IsReachable(Vector2 source, Vector2 target, int maxReflections, out List<Vector2> path)
     {
         path = null;
-        // 1) 仮想光源を BFS で展開（指数成長に注意）。
-        List<ImageNode> images = GenerateImagesBFS(source, maxReflections);
+        // 1) 仮想光源を BFS で展開（指数成長に注意）。法線方向のみの軽量枝刈りを適用。
+        List<ImageNode> images = GenerateImagesBFS(source, target, maxReflections);
         for (int i = 0; i < images.Count; i++)
         {
             ImageNode node = images[i];
@@ -73,7 +84,7 @@ public class LightPathfinder : MonoBehaviour
     /// <summary>
     /// ソースから始めて、各深さで全ミラーに関して点の鏡映を生成し列挙します（BFS）。
     /// </summary>
-    private List<ImageNode> GenerateImagesBFS(Vector2 source, int maxDepth)
+    private List<ImageNode> GenerateImagesBFS(Vector2 source, Vector2 target, int maxDepth)
     {
         // 生成した全像ノードを格納するリスト
         List<ImageNode> list = new List<ImageNode>();
@@ -89,11 +100,17 @@ public class LightPathfinder : MonoBehaviour
             // 次のフロンティアを格納するリスト
             List<ImageNode> next = new List<ImageNode>();
             // 現在のフロンティアの各ノードについて
-            for (int i = 0; i < frontier.Count; i++)
+            int frontierCount = frontier.Count;
+            for (int i = 0; i < frontierCount; i++)
             {
                 // 全ミラーに対して鏡映を生成
-                for (int m = 0; m < mirrors.Count; m++)
+                int mirrorCount = mirrors.Count;
+                for (int m = 0; m < mirrorCount; m++)
                 {
+                    // 直前と同じミラーの連続使用は枝刈り
+                    if (frontier[i].mirrorSequence.Count > 0 
+                    && frontier[i].mirrorSequence[frontier[i].mirrorSequence.Count - 1] == m)
+                        continue;
                     // m番目のミラーを取得
                     Mirror2D mirror = mirrors[m];
                     // 現在のノードの位置をこのミラーで鏡映
@@ -103,6 +120,14 @@ public class LightPathfinder : MonoBehaviour
                     seq.Add(m);
                     // 新しい像ノードを作成
                     ImageNode node = new ImageNode { position = img, mirrorSequence = seq };
+                    // 軽量枝刈り: ターゲットがこのミラーの法線正側にある場合のみ採用
+                    Vector2 a = mirror.StartPoint;
+                    Vector2 b = mirror.EndPoint;
+                    Vector2 hitOnLine = ClosestPointOnLine(a, b, target);
+                    Vector2 outv = (target - hitOnLine).normalized;
+                    Vector2 n = mirror.GetNormal();
+                    if (Vector2.Dot(outv, n) <= EPS_FRONT)
+                        continue;
                     // 次のフロンティアと全体リストに追加
                     next.Add(node);
                     list.Add(node);
@@ -115,10 +140,19 @@ public class LightPathfinder : MonoBehaviour
         return list;
     }
 
+    private static Vector2 ClosestPointOnLine(Vector2 a, Vector2 b, Vector2 p)
+    {
+        Vector2 ab = b - a;
+        float denom = ab.sqrMagnitude;
+        if (denom < 1e-12f) return a;
+        float t = Vector2.Dot(p - a, ab) / denom; // 無限直線なのでクランプ不要
+        return a + t * ab;
+    }
+
     /// <summary>
     /// 点 p を鏡（線分 ab の無限直線）に対して鏡映した位置を返します。
     /// </summary>
-    private Vector2 ReflectPointAcrossMirror(Vector2 p, Mirror2D mirror)
+    private static Vector2 ReflectPointAcrossMirror(Vector2 p, Mirror2D mirror)
     {
         Vector2 a = mirror.StartPoint;
         Vector2 b = mirror.EndPoint;
@@ -144,19 +178,16 @@ public class LightPathfinder : MonoBehaviour
             var prev = points[i - 1];
             var cur = points[i];
             var next = points[i + 1];
-            if (Physics2D.Linecast(prev, cur, obstacleLayerMask)) return false;
             int mirrorIndex = i - 1;
             if (mirrorIndex < 0 || mirrorIndex >= image.mirrorSequence.Count) return false;
             var mirror = mirrors[image.mirrorSequence[mirrorIndex]];
             Vector2 inc = (cur - prev).normalized;
             Vector2 n = mirror.GetNormal();
+            // 前面反射のみ許可: 入射方向が鏡法線に対して負向き（正面側）から来ている必要がある
+            if (Vector2.Dot(inc, n) > -EPS_FRONT) return false;
             Vector2 refl = ReflectVector(inc, n).normalized;
             Vector2 outv = (next - cur).normalized;
-            if (Vector2.Dot(refl, outv) < 1f - 1e-3f)
-            {
-                Vector2 refl2 = ReflectVector(inc, -n).normalized;
-                if (Vector2.Dot(refl2, outv) < 1f - 1e-3f) return false;
-            }
+            if (Vector2.Dot(refl, outv) < 1f - EPS_REFLECT_MATCH) return false;
         }
         for (int i = 0; i < points.Count - 1; i++)
         {
@@ -206,7 +237,7 @@ public class LightPathfinder : MonoBehaviour
         Vector2 r = p2 - p1;
         Vector2 s = p4 - p3;
         float rxs = r.x * s.y - r.y * s.x;
-        if (Mathf.Abs(rxs) < 1e-9f) return false;
+        if (Mathf.Abs(rxs) < EPS_PARALLEL) return false;
         Vector2 qp = p3 - p1;
         float t = (qp.x * s.y - qp.y * s.x) / rxs;
         intersection = p1 + t * r;
@@ -218,15 +249,14 @@ public class LightPathfinder : MonoBehaviour
     /// </summary>
     private static bool IsOnSegment(Vector2 p, Vector2 a, Vector2 b)
     {
-        float eps = 1e-4f;
         float ab = (b - a).sqrMagnitude;
         float ap = (p - a).sqrMagnitude;
         float pb = (b - p).sqrMagnitude;
-        if (ap + pb > ab + 1e-3f) return false;
+        if (ap + pb > ab + EPS_SEGMENT) return false;
         Vector2 abv = (b - a);
         Vector2 apv = (p - a);
         float cross = Mathf.Abs(abv.x * apv.y - abv.y * apv.x);
-        return cross <= eps;
+        return cross <= EPS_SEGMENT;
     }
 
     /// <summary>
@@ -234,7 +264,8 @@ public class LightPathfinder : MonoBehaviour
     /// </summary>
     private static Vector2 ReflectVector(Vector2 v, Vector2 normal)
     {
-        return v - 2f * Vector2.Dot(v, normal.normalized) * normal.normalized;
+        Vector2 nn = normal.normalized;
+        return v - 2f * Vector2.Dot(v, nn) * nn;
     }
 
     void OnDrawGizmos()

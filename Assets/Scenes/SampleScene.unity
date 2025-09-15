@@ -496,7 +496,7 @@ Transform:
   m_GameObject: {fileID: 1366164452}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.1, y: -0.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -527,8 +527,8 @@ MonoBehaviour:
   drawWhenNoPath: 1
   lastValidPath:
   - {x: -0.06, y: -3.28}
-  - {x: -4.5643144, y: -3.3656845}
-  - {x: -4.438429, y: 3.251571}
+  - {x: -4.587162, y: -3.3428373}
+  - {x: -4.4953103, y: 3.2746897}
   - {x: 0.21, y: 3.34}
   lastReachable: 1
 --- !u!114 &1810768711 stripped
@@ -617,11 +617,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5149875085720366999, guid: 8e606c0f4ec3e0140aa49c93c2d34ce9, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -4.64
+      value: -4.6
       objectReference: {fileID: 0}
     - target: {fileID: 5149875085720366999, guid: 8e606c0f4ec3e0140aa49c93c2d34ce9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.05
+      value: 3.17
       objectReference: {fileID: 0}
     - target: {fileID: 5149875085720366999, guid: 8e606c0f4ec3e0140aa49c93c2d34ce9, type: 3}
       propertyPath: m_LocalPosition.z
