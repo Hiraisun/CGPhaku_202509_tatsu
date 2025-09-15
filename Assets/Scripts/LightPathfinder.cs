@@ -12,6 +12,9 @@ public class LightPathfinder : MonoBehaviour
     private const float EPS_FRONT = 1e-4f;
     private const float EPS_REFLECT_MATCH = 3e-3f;
     private const float EPS_SEGMENT = 1e-3f;
+    private const float EPS_SHRINK = 1e-4f;
+
+    #region Inspector Fields / Results
     public Transform startPoint;
     public Transform endPoint;
 
@@ -19,15 +22,16 @@ public class LightPathfinder : MonoBehaviour
     public int maxReflections = 3;
 
     public LayerMask obstacleLayerMask;
+    [Tooltip("遮蔽として扱う鏡の LayerMask（反射に使わない鏡は遮蔽）")]
+    public LayerMask mirrorsLayerMask;
     public List<Mirror2D> mirrors = new();
 
     [Header("Debug/Result")]
-    public bool drawWhenNoPath = true;
     public List<Vector2> lastValidPath = new();
     public bool lastReachable;
+    #endregion
 
-
-
+    #region Lifecycle / Entry
     void Start()
     {
         FindPath();
@@ -45,99 +49,142 @@ public class LightPathfinder : MonoBehaviour
             return;
         }
         if (mirrors == null) mirrors = new List<Mirror2D>();
-        lastReachable = IsReachable(startPoint.position, endPoint.position, maxReflections, out lastValidPath);
+        lastReachable = IsReachableBidirectional(startPoint.position, endPoint.position, maxReflections, out lastValidPath);
     }
+    #endregion
 
+    #region Main Search (Bidirectional)
     /// <summary>
-    /// 最大 <paramref name="maxReflections"/> 回まで展開し、到達可能か判定。
-    /// 成功時は通過点リスト（source -> ミラー交点... -> target）を返す。
+    /// 最大 <paramref name="maxReflections"/> 回までの双方向探索で到達可能かを判定。
     /// </summary>
-    public bool IsReachable(Vector2 source, Vector2 target, int maxReflections, out List<Vector2> path)
+    public bool IsReachableBidirectional(Vector2 source, Vector2 target, int maxDepth, out List<Vector2> path)
     {
         path = null;
-        // 1) 仮想光源を BFS で展開（指数成長に注意）。法線方向のみの軽量枝刈りを適用。
-        List<ImageNode> images = GenerateImagesBFS(source, target, maxReflections);
-        for (int i = 0; i < images.Count; i++)
+        // 初期フロンティア
+        List<ImageNode> frontS = new List<ImageNode> { new ImageNode { position = source, mirrorSequence = new List<int>() } };
+        List<ImageNode> frontT = new List<ImageNode> { new ImageNode { position = target, mirrorSequence = new List<int>() } };
+
+        // 深さ0での直通チェック
+        if (IsSegmentClear(source, target, obstacleLayerMask))
         {
-            ImageNode node = images[i];
-            // 2) 仮想光源からターゲットへの直線が障害物に遮られないかを粗判定。
-            if (!Physics2D.Linecast(node.position, target, obstacleLayerMask))
+            var nodeZero = new ImageNode { position = source, mirrorSequence = new List<int>() };
+            if (ValidateAndBuildPath(source, target, nodeZero))
             {
-                // 3) 反射点が各ミラー線分上か、反射則/遮蔽が満たされるかの厳密検証。
-                if (ValidateAndBuildPath(source, target, node))
+                path = new List<Vector2> { source, target };
+                return true;
+            }
+        }
+
+        for (int depth = 1; depth <= maxDepth; depth++)
+        {
+            // 片側ずつ1段拡張（小さい方を先に拡張）
+            bool expandSourceFirst = frontS.Count <= frontT.Count;
+            if (expandSourceFirst)
+            {
+                var nextS = ExpandOneLayer(frontS, target);
+                // 接続チェック：新規Sと既存/新規T
+                if (TryConnectLayers(nextS, frontT, source, target, out path)) return true;
+                frontS = nextS;
+            }
+            else
+            {
+                var nextT = ExpandOneLayer(frontT, source);
+                if (TryConnectLayers(frontS, nextT, source, target, out path)) return true;
+                frontT = nextT;
+            }
+
+            // 反対側も拡張
+            if (expandSourceFirst)
+            {
+                var nextT = ExpandOneLayer(frontT, source);
+                if (TryConnectLayers(frontS, nextT, source, target, out path)) return true;
+                frontT = nextT;
+            }
+            else
+            {
+                var nextS = ExpandOneLayer(frontS, target);
+                if (TryConnectLayers(nextS, frontT, source, target, out path)) return true;
+                frontS = nextS;
+            }
+        }
+        return false;
+    }
+
+    // 片側のフロンティアを1段だけ展開。facingPoint は法線前面チェックに使用。
+    private List<ImageNode> ExpandOneLayer(List<ImageNode> frontier, Vector2 facingPoint)
+    {
+        List<ImageNode> next = new List<ImageNode>();
+        int frontierCount = frontier.Count;
+        int mirrorCount = mirrors.Count;
+        for (int i = 0; i < frontierCount; i++)
+        {
+            for (int m = 0; m < mirrorCount; m++)
+            {
+                if (frontier[i].mirrorSequence.Count > 0 && frontier[i].mirrorSequence[frontier[i].mirrorSequence.Count - 1] == m)
+                    continue;
+                Mirror2D mirror = mirrors[m];
+                Vector2 img = ReflectPointAcrossMirror(frontier[i].position, mirror);
+                List<int> seq = new List<int>(frontier[i].mirrorSequence);
+                seq.Add(m);
+                ImageNode node = new ImageNode { position = img, mirrorSequence = seq };
+                // 枝刈り：この段のミラーの法線正側に facingPoint がある想定のみ
+                Vector2 a = mirror.StartPoint;
+                Vector2 b = mirror.EndPoint;
+                Vector2 hitOnLine = ClosestPointOnLine(a, b, facingPoint);
+                Vector2 outv = (facingPoint - hitOnLine).normalized;
+                Vector2 n = mirror.GetNormal();
+                if (Vector2.Dot(outv, n) <= EPS_FRONT) continue;
+
+                next.Add(node);
+            }
+        }
+        return next;
+    }
+
+    // 2つのフロンティア集合の間で接続可能なペアを探し、見つかれば検証してパスを返す
+    private bool TryConnectLayers(List<ImageNode> sideA, List<ImageNode> sideB, Vector2 source, Vector2 target, out List<Vector2> path)
+    {
+        path = null;
+        for (int i = 0; i < sideA.Count; i++)
+        {
+            for (int j = 0; j < sideB.Count; j++)
+            {
+                Vector2 pa = sideA[i].position;
+                Vector2 pb = sideB[j].position;
+                if (!IsSegmentClear(pa, pb, obstacleLayerMask)) continue;
+
+                // 鏡列合成: source側 seqA と target側 seqB を逆順に連結
+                var seqA = sideA[i].mirrorSequence;
+                var seqB = sideB[j].mirrorSequence;
+                List<int> combined = new List<int>(seqA.Count + seqB.Count);
+                combined.AddRange(seqA);
+                for (int k = seqB.Count - 1; k >= 0; k--) combined.Add(seqB[k]);
+
+                // 画像位置も合成: pa（= seqA 適用済み）に対し seqB を逆順で適用
+                Vector2 combinedImage = pa;
+                for (int k = seqB.Count - 1; k >= 0; k--)
                 {
-                    path = BuildFullPathPoints(source, target, node);
+                    combinedImage = ReflectPointAcrossMirror(combinedImage, mirrors[seqB[k]]);
+                }
+
+                var nodeCombined = new ImageNode { position = combinedImage, mirrorSequence = combined };
+                if (ValidateAndBuildPath(source, target, nodeCombined))
+                {
+                    path = BuildFullPathPoints(source, target, nodeCombined);
                     return true;
                 }
             }
         }
         return false;
     }
+    #endregion
 
+    #region Geometry Helpers
     // 像のノード
     private struct ImageNode
     {
         public Vector2 position;
         public List<int> mirrorSequence;
-    }
-
-    /// <summary>
-    /// ソースから始めて、各深さで全ミラーに関して点の鏡映を生成し列挙します（BFS）。
-    /// </summary>
-    private List<ImageNode> GenerateImagesBFS(Vector2 source, Vector2 target, int maxDepth)
-    {
-        // 生成した全像ノードを格納するリスト
-        List<ImageNode> list = new List<ImageNode>();
-        // 最初のノードを追加
-        list.Add(new ImageNode { position = source, mirrorSequence = new List<int>() });
-
-        // 現在のフロンティア（この深さで展開する像ノード群）
-        List<ImageNode> frontier = new List<ImageNode> { list[0] };
-
-        // 指定された深さまでBFSで展開
-        for (int depth = 1; depth <= maxDepth; depth++)
-        {
-            // 次のフロンティアを格納するリスト
-            List<ImageNode> next = new List<ImageNode>();
-            // 現在のフロンティアの各ノードについて
-            int frontierCount = frontier.Count;
-            for (int i = 0; i < frontierCount; i++)
-            {
-                // 全ミラーに対して鏡映を生成
-                int mirrorCount = mirrors.Count;
-                for (int m = 0; m < mirrorCount; m++)
-                {
-                    // 直前と同じミラーの連続使用は枝刈り
-                    if (frontier[i].mirrorSequence.Count > 0 
-                    && frontier[i].mirrorSequence[frontier[i].mirrorSequence.Count - 1] == m)
-                        continue;
-                    // m番目のミラーを取得
-                    Mirror2D mirror = mirrors[m];
-                    // 現在のノードの位置をこのミラーで鏡映
-                    Vector2 img = ReflectPointAcrossMirror(frontier[i].position, mirror);
-                    // ミラー列を複製し、今回のミラーを追加
-                    List<int> seq = new List<int>(frontier[i].mirrorSequence);
-                    seq.Add(m);
-                    // 新しい像ノードを作成
-                    ImageNode node = new ImageNode { position = img, mirrorSequence = seq };
-                    // 軽量枝刈り: ターゲットがこのミラーの法線正側にある場合のみ採用
-                    Vector2 a = mirror.StartPoint;
-                    Vector2 b = mirror.EndPoint;
-                    Vector2 hitOnLine = ClosestPointOnLine(a, b, target);
-                    Vector2 outv = (target - hitOnLine).normalized;
-                    Vector2 n = mirror.GetNormal();
-                    if (Vector2.Dot(outv, n) <= EPS_FRONT)
-                        continue;
-                    // 次のフロンティアと全体リストに追加
-                    next.Add(node);
-                    list.Add(node);
-                }
-            }
-            // 次の深さのフロンティアに更新
-            frontier = next;
-        }
-        // 全ての像ノードを返す
-        return list;
     }
 
     private static Vector2 ClosestPointOnLine(Vector2 a, Vector2 b, Vector2 p)
@@ -149,9 +196,6 @@ public class LightPathfinder : MonoBehaviour
         return a + t * ab;
     }
 
-    /// <summary>
-    /// 点 p を鏡（線分 ab の無限直線）に対して鏡映した位置を返します。
-    /// </summary>
     private static Vector2 ReflectPointAcrossMirror(Vector2 p, Mirror2D mirror)
     {
         Vector2 a = mirror.StartPoint;
@@ -165,6 +209,55 @@ public class LightPathfinder : MonoBehaviour
         return p - 2f * dist * n;
     }
 
+    private bool IntersectLineWithMirror(Vector2 p1, Vector2 p2, Mirror2D mirror, out Vector2 hit)
+    {
+        return LineLineIntersection(p1, p2, mirror.StartPoint, mirror.EndPoint, out hit);
+    }
+
+    private static bool LineLineIntersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, out Vector2 intersection)
+    {
+        intersection = Vector2.zero;
+        Vector2 r = p2 - p1;
+        Vector2 s = p4 - p3;
+        float rxs = r.x * s.y - r.y * s.x;
+        if (Mathf.Abs(rxs) < EPS_PARALLEL) return false;
+        Vector2 qp = p3 - p1;
+        float t = (qp.x * s.y - qp.y * s.x) / rxs;
+        intersection = p1 + t * r;
+        return true;
+    }
+
+    private static bool IsOnSegment(Vector2 p, Vector2 a, Vector2 b)
+    {
+        float ab = (b - a).sqrMagnitude;
+        float ap = (p - a).sqrMagnitude;
+        float pb = (b - p).sqrMagnitude;
+        if (ap + pb > ab + EPS_SEGMENT) return false;
+        Vector2 abv = (b - a);
+        Vector2 apv = (p - a);
+        float cross = Mathf.Abs(abv.x * apv.y - abv.y * apv.x);
+        return cross <= EPS_SEGMENT;
+    }
+
+    private static Vector2 ReflectVector(Vector2 v, Vector2 normal)
+    {
+        Vector2 nn = normal.normalized;
+        return v - 2f * Vector2.Dot(v, nn) * nn;
+    }
+
+    private static bool IsSegmentClear(Vector2 a, Vector2 b, LayerMask mask)
+    {
+        Vector2 dir = b - a;
+        float len = dir.magnitude;
+        if (len < 1e-6f) return true;
+        dir /= len;
+        Vector2 aa = a + dir * EPS_SHRINK;
+        Vector2 bb = b - dir * EPS_SHRINK;
+        return !Physics2D.Linecast(aa, bb, mask);
+    }
+    #endregion
+
+    #region Validation / Path Build
     /// <summary>
     /// ターゲットから仮想光源へ向かう直線を、像生成の鏡列を逆順にたどって交点を求め、
     /// 各交点が線分上であること・反射則が成り立つこと・障害物に遮られないことを検証します。
@@ -183,7 +276,7 @@ public class LightPathfinder : MonoBehaviour
             var mirror = mirrors[image.mirrorSequence[mirrorIndex]];
             Vector2 inc = (cur - prev).normalized;
             Vector2 n = mirror.GetNormal();
-            // 前面反射のみ許可: 入射方向が鏡法線に対して負向き（正面側）から来ている必要がある
+            // 前面反射のみ許可
             if (Vector2.Dot(inc, n) > -EPS_FRONT) return false;
             Vector2 refl = ReflectVector(inc, n).normalized;
             Vector2 outv = (next - cur).normalized;
@@ -191,14 +284,11 @@ public class LightPathfinder : MonoBehaviour
         }
         for (int i = 0; i < points.Count - 1; i++)
         {
-            if (Physics2D.Linecast(points[i], points[i + 1], obstacleLayerMask)) return false;
+            if (!IsSegmentClear(points[i], points[i + 1], obstacleLayerMask | mirrorsLayerMask)) return false;
         }
         return true;
     }
 
-    /// <summary>
-    /// 検証用に、source -> 反射点群 -> target の順で通過点リストを構築します。
-    /// </summary>
     private List<Vector2> BuildFullPathPoints(Vector2 source, Vector2 target, ImageNode image)
     {
         var seq = image.mirrorSequence;
@@ -222,56 +312,13 @@ public class LightPathfinder : MonoBehaviour
         points.Add(target);
         return points;
     }
+    #endregion
 
-    private bool IntersectLineWithMirror(Vector2 p1, Vector2 p2, Mirror2D mirror, out Vector2 hit)
-    {
-        return LineLineIntersection(p1, p2, mirror.StartPoint, mirror.EndPoint, out hit);
-    }
-
-    /// <summary>
-    /// 無限直線 p1-p2 と p3-p4 の交点を求めます（平行時は false）。
-    /// </summary>
-    private static bool LineLineIntersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, out Vector2 intersection)
-    {
-        intersection = Vector2.zero;
-        Vector2 r = p2 - p1;
-        Vector2 s = p4 - p3;
-        float rxs = r.x * s.y - r.y * s.x;
-        if (Mathf.Abs(rxs) < EPS_PARALLEL) return false;
-        Vector2 qp = p3 - p1;
-        float t = (qp.x * s.y - qp.y * s.x) / rxs;
-        intersection = p1 + t * r;
-        return true;
-    }
-
-    /// <summary>
-    /// 点 p が線分 ab 上にあるか（ε許容）
-    /// </summary>
-    private static bool IsOnSegment(Vector2 p, Vector2 a, Vector2 b)
-    {
-        float ab = (b - a).sqrMagnitude;
-        float ap = (p - a).sqrMagnitude;
-        float pb = (b - p).sqrMagnitude;
-        if (ap + pb > ab + EPS_SEGMENT) return false;
-        Vector2 abv = (b - a);
-        Vector2 apv = (p - a);
-        float cross = Mathf.Abs(abv.x * apv.y - abv.y * apv.x);
-        return cross <= EPS_SEGMENT;
-    }
-
-    /// <summary>
-    /// ベクトル v を法線 normal で反射したベクトルを返す。
-    /// </summary>
-    private static Vector2 ReflectVector(Vector2 v, Vector2 normal)
-    {
-        Vector2 nn = normal.normalized;
-        return v - 2f * Vector2.Dot(v, nn) * nn;
-    }
-
+    #region Gizmos / Editor
     void OnDrawGizmos()
     {
         if (lastValidPath == null) return;
-        if (lastValidPath.Count < 2 && !drawWhenNoPath) return;
+        if (lastValidPath.Count < 2) return;
         Gizmos.color = Color.yellow;
         for (int i = 0; i < lastValidPath.Count - 1; i++)
         {
@@ -304,5 +351,6 @@ public class LightPathfinder : MonoBehaviour
             }
         }
     }
-#endif
+    #endif
+    #endregion
 }
