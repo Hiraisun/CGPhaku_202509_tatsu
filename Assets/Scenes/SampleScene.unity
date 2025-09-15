@@ -593,8 +593,9 @@ MonoBehaviour:
     m_Bits: 256
   mirrors:
   - {fileID: 1810768711}
-  - {fileID: 305329188}
   - {fileID: 1088584268}
+  - {fileID: 0}
+  - {fileID: 305329188}
   lastValidPath:
   - {x: -0.06, y: -3.28}
   - {x: -4.784245, y: -3.1457558}

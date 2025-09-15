@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// 2D におけるライトパス探索。
@@ -34,7 +35,21 @@ public class LightPathfinder : MonoBehaviour
     #region Lifecycle / Entry
     void Start()
     {
+        AutoRegisterMirrors();
         FindPath();
+    }
+    
+    void OnEnable()
+    {
+        // ゲーム中にMirror2Dが生成された場合の検出
+        Mirror2D.OnMirrorCreated += OnMirrorCreated;
+        Mirror2D.OnMirrorDestroyed += OnMirrorDestroyed;
+    }
+    
+    void OnDisable()
+    {
+        Mirror2D.OnMirrorCreated -= OnMirrorCreated;
+        Mirror2D.OnMirrorDestroyed -= OnMirrorDestroyed;
     }
 
     /// <summary>
@@ -50,6 +65,53 @@ public class LightPathfinder : MonoBehaviour
         }
         if (mirrors == null) mirrors = new List<Mirror2D>();
         lastReachable = IsReachableBidirectional(startPoint.position, endPoint.position, maxReflections, out lastValidPath);
+    }
+    
+    /// <summary>
+    /// シーン内のMirror2Dを自動で検出・登録する
+    /// </summary>
+    public void AutoRegisterMirrors()
+    {
+        // 既存のミラーリストをクリア
+        mirrors.Clear();
+        
+        // シーン内の全てのMirror2Dを検索
+        Mirror2D[] allMirrors = FindObjectsByType<Mirror2D>(FindObjectsSortMode.None);
+        
+        foreach (var mirror in allMirrors)
+        {
+            mirrors.Add(mirror);
+        }
+        
+        Debug.Log($"LightPathfinder: {mirrors.Count}個のMirror2Dを自動登録しました");
+    }
+    
+    /// <summary>
+    /// Mirror2Dが生成された時のコールバック
+    /// </summary>
+    private void OnMirrorCreated(Mirror2D mirror)
+    {
+        if (!mirrors.Contains(mirror))
+        {
+            mirrors.Add(mirror);
+            Debug.Log($"LightPathfinder: Mirror2D '{mirror.name}' を自動登録しました");
+            // パスを再計算
+            FindPath();
+        }
+    }
+    
+    /// <summary>
+    /// Mirror2Dが削除された時のコールバック
+    /// </summary>
+    private void OnMirrorDestroyed(Mirror2D mirror)
+    {
+        if (mirrors.Contains(mirror))
+        {
+            mirrors.Remove(mirror);
+            Debug.Log($"LightPathfinder: Mirror2D '{mirror.name}' を自動登録から削除しました");
+            // パスを再計算
+            FindPath();
+        }
     }
     #endregion
 
@@ -344,9 +406,19 @@ public class LightPathfinder : MonoBehaviour
             DrawDefaultInspector();
 
             LightPathfinder pathfinder = (LightPathfinder)target;
+            
+            UnityEditor.EditorGUILayout.Space();
+            UnityEditor.EditorGUILayout.LabelField("操作", UnityEditor.EditorStyles.boldLabel);
+            
             if (GUILayout.Button("再探査（FindPath 実行）"))
             {
                 pathfinder.FindPath();
+                UnityEditor.EditorUtility.SetDirty(pathfinder);
+            }
+            
+            if (GUILayout.Button("Mirror2Dを手動で再登録"))
+            {
+                pathfinder.AutoRegisterMirrors();
                 UnityEditor.EditorUtility.SetDirty(pathfinder);
             }
         }

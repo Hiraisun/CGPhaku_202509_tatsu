@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 /// <summary>
 /// 2D の有限長ミラー（線分）を表すコンポーネント。
@@ -14,6 +15,10 @@ public class Mirror2D : MonoBehaviour
     public Vector2 StartPoint => transform.TransformPoint(startPointLocal);
     public Vector2 EndPoint => transform.TransformPoint(endPointLocal);
     
+    // イベント通知用のデリゲート
+    public static event Action<Mirror2D> OnMirrorCreated;
+    public static event Action<Mirror2D> OnMirrorDestroyed;
+    
     /// <summary>
     /// 線分の法線ベクトル（向きは左右いずれか）。
     /// </summary>
@@ -21,6 +26,18 @@ public class Mirror2D : MonoBehaviour
         Vector2 dir = EndPoint - StartPoint;
         Vector2 normal = new Vector2(-dir.y, dir.x).normalized;
         return normal;
+    }
+    
+    void Awake()
+    {
+        // オブジェクトが生成された時にイベントを発火
+        OnMirrorCreated?.Invoke(this);
+    }
+    
+    void OnDestroy()
+    {
+        // オブジェクトが削除される時にイベントを発火
+        OnMirrorDestroyed?.Invoke(this);
     }
 
 
