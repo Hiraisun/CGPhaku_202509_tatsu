@@ -1,17 +1,23 @@
 using UnityEngine;
 
+/// <summary>
+/// 2D の有限長ミラー（線分）を表すコンポーネント。
+/// ローカル空間の始点/終点からワールド座標の線分を生成し、法線や可視化を提供します。
+/// </summary>
 public class Mirror2D : MonoBehaviour
 {
-    [SerializeField]
+    [SerializeField, Tooltip("ローカル空間における線分の始点（オブジェクト原点からのオフセット）")]
     private Vector2 startPointLocal;
-    [SerializeField]
+    [SerializeField, Tooltip("ローカル空間における線分の終点（オブジェクト原点からのオフセット）")]
     private Vector2 endPointLocal;
 
     public Vector2 StartPoint => transform.TransformPoint(startPointLocal);
     public Vector2 EndPoint => transform.TransformPoint(endPointLocal);
     
+    /// <summary>
+    /// 線分の法線ベクトル（向きは左右いずれか）。
+    /// </summary>
     public Vector2 GetNormal(){
-        // 線分の法線ベクトルを計算して返す
         Vector2 dir = EndPoint - StartPoint;
         Vector2 normal = new Vector2(-dir.y, dir.x).normalized;
         return normal;
