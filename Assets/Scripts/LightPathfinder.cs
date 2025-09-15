@@ -45,10 +45,10 @@ public class LightPathfinder : MonoBehaviour
     {
         path = null;
         // 1) 仮想光源を BFS で展開（指数成長に注意）。
-        var images = GenerateImagesBFS(source, maxReflections);
+        List<ImageNode> images = GenerateImagesBFS(source, maxReflections);
         for (int i = 0; i < images.Count; i++)
         {
-            var node = images[i];
+            ImageNode node = images[i];
             // 2) 仮想光源からターゲットへの直線が障害物に遮られないかを粗判定。
             if (!Physics2D.Linecast(node.position, target, obstacleLayerMask))
             {
@@ -63,6 +63,7 @@ public class LightPathfinder : MonoBehaviour
         return false;
     }
 
+    // 像のノード
     private struct ImageNode
     {
         public Vector2 position;
@@ -74,27 +75,43 @@ public class LightPathfinder : MonoBehaviour
     /// </summary>
     private List<ImageNode> GenerateImagesBFS(Vector2 source, int maxDepth)
     {
-        var list = new List<ImageNode>();
+        // 生成した全像ノードを格納するリスト
+        List<ImageNode> list = new List<ImageNode>();
+        // 最初のノードを追加
         list.Add(new ImageNode { position = source, mirrorSequence = new List<int>() });
-        var frontier = new List<ImageNode> { list[0] };
+
+        // 現在のフロンティア（この深さで展開する像ノード群）
+        List<ImageNode> frontier = new List<ImageNode> { list[0] };
+
+        // 指定された深さまでBFSで展開
         for (int depth = 1; depth <= maxDepth; depth++)
         {
-            var next = new List<ImageNode>();
+            // 次のフロンティアを格納するリスト
+            List<ImageNode> next = new List<ImageNode>();
+            // 現在のフロンティアの各ノードについて
             for (int i = 0; i < frontier.Count; i++)
             {
+                // 全ミラーに対して鏡映を生成
                 for (int m = 0; m < mirrors.Count; m++)
                 {
-                    var mirror = mirrors[m];
+                    // m番目のミラーを取得
+                    Mirror2D mirror = mirrors[m];
+                    // 現在のノードの位置をこのミラーで鏡映
                     Vector2 img = ReflectPointAcrossMirror(frontier[i].position, mirror);
-                    var seq = new List<int>(frontier[i].mirrorSequence);
+                    // ミラー列を複製し、今回のミラーを追加
+                    List<int> seq = new List<int>(frontier[i].mirrorSequence);
                     seq.Add(m);
-                    var node = new ImageNode { position = img, mirrorSequence = seq };
+                    // 新しい像ノードを作成
+                    ImageNode node = new ImageNode { position = img, mirrorSequence = seq };
+                    // 次のフロンティアと全体リストに追加
                     next.Add(node);
                     list.Add(node);
                 }
             }
+            // 次の深さのフロンティアに更新
             frontier = next;
         }
+        // 全ての像ノードを返す
         return list;
     }
 
@@ -165,6 +182,7 @@ public class LightPathfinder : MonoBehaviour
             if (!IsOnSegment(hit, mirror.StartPoint, mirror.EndPoint)) return null;
             hitsReverse.Add(hit);
             virtualEndpoint = ReflectPointAcrossMirror(virtualEndpoint, mirror);
+            lineFrom = ReflectPointAcrossMirror(lineFrom, mirror);
             lineTo = virtualEndpoint;
         }
         var points = new List<Vector2>();
