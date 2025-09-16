@@ -28,6 +28,8 @@ public class LightPathfinder : MonoBehaviour
     public List<Mirror2D> mirrors = new();
 
     [Header("Debug/Result")]
+    [Tooltip("デバッグ情報をログ出力するか")]
+    public bool enableDebugLog = false;
     public List<Vector2> lastValidPath = new();
     public bool lastReachable;
     #endregion
@@ -38,7 +40,7 @@ public class LightPathfinder : MonoBehaviour
         AutoRegisterMirrors();
         FindPath();
     }
-    
+
     void OnEnable()
     {
         // ゲーム中にMirror2Dが生成された場合の検出
@@ -121,10 +123,14 @@ public class LightPathfinder : MonoBehaviour
     /// </summary>
     public bool IsReachableBidirectional(Vector2 source, Vector2 target, int maxDepth, out List<Vector2> path)
     {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        int totalNodesGenerated = 0;
+        int connectionChecks = 0;
         path = null;
         // 初期フロンティア
         List<ImageNode> frontS = new List<ImageNode> { new ImageNode { position = source, mirrorSequence = new List<int>() } };
         List<ImageNode> frontT = new List<ImageNode> { new ImageNode { position = target, mirrorSequence = new List<int>() } };
+        totalNodesGenerated = 2; // source + target
 
         // 深さ0での直通チェック
         if (IsSegmentClear(source, target, obstacleLayerMask))
@@ -133,6 +139,7 @@ public class LightPathfinder : MonoBehaviour
             if (ValidateAndBuildPath(source, target, nodeZero))
             {
                 path = new List<Vector2> { source, target };
+                LogDebugResult("直通成功", stopwatch, totalNodesGenerated, connectionChecks);
                 return true;
             }
         }
@@ -144,14 +151,24 @@ public class LightPathfinder : MonoBehaviour
             if (expandSourceFirst)
             {
                 var nextS = ExpandOneLayer(frontS, target);
+                totalNodesGenerated += nextS.Count;
                 // 接続チェック：新規Sと既存/新規T
-                if (TryConnectLayers(nextS, frontT, source, target, out path)) return true;
+                if (TryConnectLayers(nextS, frontT, source, target, out path, ref connectionChecks)) 
+                {
+                    LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
+                    return true;
+                }
                 frontS = nextS;
             }
             else
             {
                 var nextT = ExpandOneLayer(frontT, source);
-                if (TryConnectLayers(frontS, nextT, source, target, out path)) return true;
+                totalNodesGenerated += nextT.Count;
+                if (TryConnectLayers(frontS, nextT, source, target, out path, ref connectionChecks)) 
+                {
+                    LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
+                    return true;
+                }
                 frontT = nextT;
             }
 
@@ -159,17 +176,37 @@ public class LightPathfinder : MonoBehaviour
             if (expandSourceFirst)
             {
                 var nextT = ExpandOneLayer(frontT, source);
-                if (TryConnectLayers(frontS, nextT, source, target, out path)) return true;
+                totalNodesGenerated += nextT.Count;
+                if (TryConnectLayers(frontS, nextT, source, target, out path, ref connectionChecks)) 
+                {
+                    LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
+                    return true;
+                }
                 frontT = nextT;
             }
             else
             {
                 var nextS = ExpandOneLayer(frontS, target);
-                if (TryConnectLayers(nextS, frontT, source, target, out path)) return true;
+                totalNodesGenerated += nextS.Count;
+                if (TryConnectLayers(nextS, frontT, source, target, out path, ref connectionChecks)) 
+                {
+                    LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
+                    return true;
+                }
                 frontS = nextS;
             }
         }
+        LogDebugResult("失敗", stopwatch, totalNodesGenerated, connectionChecks);
         return false;
+    }
+
+    private void LogDebugResult(string result, System.Diagnostics.Stopwatch stopwatch, int totalNodes, int connectionChecks)
+    {
+        if (enableDebugLog)
+        {
+            stopwatch.Stop();
+            Debug.Log($"[LightPathfinder] {result}: {stopwatch.ElapsedMilliseconds}ms, ノード数: {totalNodes}, 接続チェック: {connectionChecks}");
+        }
     }
 
     // 片側のフロンティアを1段だけ展開。facingPoint は法線前面チェックに使用。
@@ -204,13 +241,14 @@ public class LightPathfinder : MonoBehaviour
     }
 
     // 2つのフロンティア集合の間で接続可能なペアを探し、見つかれば検証してパスを返す
-    private bool TryConnectLayers(List<ImageNode> sideA, List<ImageNode> sideB, Vector2 source, Vector2 target, out List<Vector2> path)
+    private bool TryConnectLayers(List<ImageNode> sideA, List<ImageNode> sideB, Vector2 source, Vector2 target, out List<Vector2> path, ref int connectionChecks)
     {
         path = null;
         for (int i = 0; i < sideA.Count; i++)
         {
             for (int j = 0; j < sideB.Count; j++)
             {
+                connectionChecks++;
                 Vector2 pa = sideA[i].position;
                 Vector2 pb = sideB[j].position;
                 if (!IsSegmentClear(pa, pb, obstacleLayerMask)) continue;
