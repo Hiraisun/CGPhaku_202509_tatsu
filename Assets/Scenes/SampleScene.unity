@@ -547,6 +547,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1366164453}
+  - component: {fileID: 1366164456}
   - component: {fileID: 1366164454}
   m_Layer: 0
   m_Name: Manager
@@ -567,7 +568,8 @@ Transform:
   m_LocalPosition: {x: -0.1, y: -0.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1867982660}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1366164454
@@ -602,6 +604,23 @@ MonoBehaviour:
   - {x: -4.9727273, y: 3.4872725}
   - {x: 0.21, y: 3.34}
   lastReachable: 1
+--- !u!114 &1366164456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1366164452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ff8fa014ed033843ab90435cea6f8fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  maxMirrors: 5
+  timeLimit: 60
+  maxReflections: 3
+  pathfinder: {fileID: 1366164454}
+  mirrorPlacer: {fileID: 1867982662}
 --- !u!114 &1810768711 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5935183082726694874, guid: 8e606c0f4ec3e0140aa49c93c2d34ce9, type: 3}
@@ -613,6 +632,65 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6f51fa30f5b25845aa99bc2b499a4d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mirror2D
+--- !u!1 &1867982659
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1867982660}
+  - component: {fileID: 1867982662}
+  - component: {fileID: 1867982661}
+  m_Layer: 0
+  m_Name: Input
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1867982660
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -2.7690501, y: 0.83808, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1366164453}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1867982661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca941a49295021541a083ce20f584124, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InputPC
+  rotationSensitivity: 1
+--- !u!114 &1867982662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fc0bf965cbb734d8b99a28287ee322, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MirrorPlacer
+  mirrorPrefab: {fileID: 5661202284560084638, guid: 8e606c0f4ec3e0140aa49c93c2d34ce9, type: 3}
 --- !u!1001 &2207790388763659153
 PrefabInstance:
   m_ObjectHideFlags: 0
