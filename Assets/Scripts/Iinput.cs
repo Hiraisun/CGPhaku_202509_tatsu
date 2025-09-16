@@ -5,37 +5,25 @@ using UnityEngine;
 /// </summary>
 public interface IInput
 {
-    event System.Action<InputData> OnInputReceived;
+    // 純粋な入力イベント（状態に関係なく発火）
+    event System.Action<Vector2> OnPositionInput;
+    event System.Action<Vector2> OnDirectionInput;
+    event System.Action OnCancelInput;
+    
+    // 現在の状態を設定（MirrorPlacerが状態を教える）
+    void SetPlacementState(PlacementPhase phase);
+    
+    // 初期化・クリーンアップ
     void Initialize();
     void Cleanup();
     bool IsInputActive { get; }
 }
 
 /// <summary>
-/// プラットフォーム非依存の入力イベント定義
+/// 配置フェーズの定義
 /// </summary>
-public enum InputAction
+public enum PlacementPhase
 {
-    None,
-    ConfirmPlacement,  // 配置確定
-}
-
-/// <summary>
-/// 入力データの構造体
-/// </summary>
-[System.Serializable]
-public struct InputData
-{
-    public Vector2 worldPosition;      // ワールド座標での位置
-    public Vector2 screenPosition;     // スクリーン座標での位置
-    public float rotation;             // 回転角度（度）
-    public InputAction action;         // 実行するアクション
-    
-    public InputData(Vector2 worldPos, Vector2 screenPos, InputAction act, int type = 0, float rot = 0f, bool valid = false)
-    {
-        worldPosition = worldPos;
-        screenPosition = screenPos;
-        rotation = rot;
-        action = act;
-    }
+    Idle,           // 待機中
+    PositionSet     // 位置決定済み
 }

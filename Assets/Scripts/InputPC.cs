@@ -9,11 +9,14 @@ public class InputPC : MonoBehaviour, IInput
     public float rotationSensitivity = 1.0f;
     
     // IInput実装
-    public event System.Action<InputData> OnInputReceived;
+    public event System.Action<Vector2> OnPositionInput;
+    public event System.Action<Vector2> OnDirectionInput;
+    public event System.Action OnCancelInput;
     public bool IsInputActive { get; private set; }
     
     // 内部状態
     private Camera mainCamera;
+    private PlacementPhase currentPhase = PlacementPhase.Idle;
     
     void Start()
     {
@@ -22,7 +25,29 @@ public class InputPC : MonoBehaviour, IInput
     
     void Update()
     {
-        HandleMouseInput();
+        if (!IsInputActive) return;
+        
+        Vector2 mousePos = Input.mousePosition;
+        Vector2 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
+        
+        // 左クリック（位置決定/方向決定）
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (currentPhase == PlacementPhase.Idle)
+            {
+                OnPositionInput?.Invoke(worldPos);
+            }
+            else if (currentPhase == PlacementPhase.PositionSet)
+            {
+                OnDirectionInput?.Invoke(worldPos);
+            }
+        }
+        
+        // 右クリック（キャンセル）
+        if (Input.GetMouseButtonDown(1))
+        {
+            OnCancelInput?.Invoke();
+        }
     }
     
     void OnDestroy()
@@ -45,35 +70,8 @@ public class InputPC : MonoBehaviour, IInput
         IsInputActive = false;
     }
     
-    private void HandleMouseInput()
+    public void SetPlacementState(PlacementPhase phase)
     {
-        if (!IsInputActive) return;
-        
-        Vector2 mousePos = Input.mousePosition;
-        Vector2 worldPos = ScreenToWorldPosition(mousePos);
-        
-        // マウスボタンが押された時
-        if (Input.GetMouseButtonDown(0))
-        {
-            OnMouseDown(mousePos, worldPos);
-        }
-    }
-    
-    private void OnMouseDown(Vector2 screenPos, Vector2 worldPos)
-    {
-        Debug.Log("OnMouseDown");
-        var inputData = new InputData(
-            worldPos,
-            screenPos,
-            InputAction.ConfirmPlacement
-        );
-        
-        OnInputReceived?.Invoke(inputData);
-    }
-    
-    private Vector2 ScreenToWorldPosition(Vector2 screenPos)
-    {
-        if (mainCamera == null) return Vector2.zero;
-        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, mainCamera.nearClipPlane));
+        currentPhase = phase;
     }
 }
