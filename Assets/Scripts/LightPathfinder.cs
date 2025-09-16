@@ -14,6 +14,7 @@ public class LightPathfinder : MonoBehaviour
     private const float EPS_REFLECT_MATCH = 3e-3f;
     private const float EPS_SEGMENT = 1e-3f;
     private const float EPS_SHRINK = 1e-4f;
+    private const float DEDUP_QUANT = 1000f; // 重複削減用の位置量子化係数（約1e-3精度）
 
     #region Inspector Fields / Results
     public Transform startPoint;
@@ -96,9 +97,6 @@ public class LightPathfinder : MonoBehaviour
         if (!mirrors.Contains(mirror))
         {
             mirrors.Add(mirror);
-            Debug.Log($"LightPathfinder: Mirror2D '{mirror.name}' を自動登録しました");
-            // パスを再計算
-            FindPath();
         }
     }
     
@@ -110,9 +108,6 @@ public class LightPathfinder : MonoBehaviour
         if (mirrors.Contains(mirror))
         {
             mirrors.Remove(mirror);
-            Debug.Log($"LightPathfinder: Mirror2D '{mirror.name}' を自動登録から削除しました");
-            // パスを再計算
-            FindPath();
         }
     }
     #endregion
@@ -127,6 +122,8 @@ public class LightPathfinder : MonoBehaviour
         int totalNodesGenerated = 0;
         int connectionChecks = 0;
         path = null;
+        // この探索実行中のみ有効なミラー幾何キャッシュ
+        var mirrorGeos = BuildMirrorGeometries();
         // 初期フロンティア
         List<ImageNode> frontS = new List<ImageNode> { new ImageNode { position = source, mirrorSequence = new List<int>() } };
         List<ImageNode> frontT = new List<ImageNode> { new ImageNode { position = target, mirrorSequence = new List<int>() } };
@@ -136,7 +133,7 @@ public class LightPathfinder : MonoBehaviour
         if (IsSegmentClear(source, target, obstacleLayerMask))
         {
             var nodeZero = new ImageNode { position = source, mirrorSequence = new List<int>() };
-            if (ValidateAndBuildPath(source, target, nodeZero))
+            if (ValidateAndBuildPath(source, target, nodeZero, mirrorGeos))
             {
                 path = new List<Vector2> { source, target };
                 LogDebugResult("直通成功", stopwatch, totalNodesGenerated, connectionChecks);
@@ -150,10 +147,10 @@ public class LightPathfinder : MonoBehaviour
             bool expandSourceFirst = frontS.Count <= frontT.Count;
             if (expandSourceFirst)
             {
-                var nextS = ExpandOneLayer(frontS, target);
+                var nextS = ExpandOneLayer(frontS, target, mirrorGeos);
                 totalNodesGenerated += nextS.Count;
                 // 接続チェック：新規Sと既存/新規T
-                if (TryConnectLayers(nextS, frontT, source, target, out path, ref connectionChecks)) 
+                if (TryConnectLayers(nextS, frontT, source, target, out path, ref connectionChecks, mirrorGeos)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
@@ -162,9 +159,9 @@ public class LightPathfinder : MonoBehaviour
             }
             else
             {
-                var nextT = ExpandOneLayer(frontT, source);
+                var nextT = ExpandOneLayer(frontT, source, mirrorGeos);
                 totalNodesGenerated += nextT.Count;
-                if (TryConnectLayers(frontS, nextT, source, target, out path, ref connectionChecks)) 
+                if (TryConnectLayers(frontS, nextT, source, target, out path, ref connectionChecks, mirrorGeos)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
@@ -175,9 +172,9 @@ public class LightPathfinder : MonoBehaviour
             // 反対側も拡張
             if (expandSourceFirst)
             {
-                var nextT = ExpandOneLayer(frontT, source);
+                var nextT = ExpandOneLayer(frontT, source, mirrorGeos);
                 totalNodesGenerated += nextT.Count;
-                if (TryConnectLayers(frontS, nextT, source, target, out path, ref connectionChecks)) 
+                if (TryConnectLayers(frontS, nextT, source, target, out path, ref connectionChecks, mirrorGeos)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
@@ -186,9 +183,9 @@ public class LightPathfinder : MonoBehaviour
             }
             else
             {
-                var nextS = ExpandOneLayer(frontS, target);
+                var nextS = ExpandOneLayer(frontS, target, mirrorGeos);
                 totalNodesGenerated += nextS.Count;
-                if (TryConnectLayers(nextS, frontT, source, target, out path, ref connectionChecks)) 
+                if (TryConnectLayers(nextS, frontT, source, target, out path, ref connectionChecks, mirrorGeos)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
@@ -210,30 +207,37 @@ public class LightPathfinder : MonoBehaviour
     }
 
     // 片側のフロンティアを1段だけ展開。facingPoint は法線前面チェックに使用。
-    private List<ImageNode> ExpandOneLayer(List<ImageNode> frontier, Vector2 facingPoint)
+    private List<ImageNode> ExpandOneLayer(List<ImageNode> frontier, Vector2 facingPoint, MirrorGeo[] mirrorGeos)
     {
         List<ImageNode> next = new List<ImageNode>();
         int frontierCount = frontier.Count;
         int mirrorCount = mirrors.Count;
+        // 同層での重複像（同じミラー末尾かつ量子化座標一致）を抑制
+        var seen = new HashSet<(int,int,int)>();
         for (int i = 0; i < frontierCount; i++)
         {
             for (int m = 0; m < mirrorCount; m++)
             {
                 if (frontier[i].mirrorSequence.Count > 0 && frontier[i].mirrorSequence[frontier[i].mirrorSequence.Count - 1] == m)
                     continue;
-                Mirror2D mirror = mirrors[m];
-                Vector2 img = ReflectPointAcrossMirror(frontier[i].position, mirror);
-                List<int> seq = new List<int>(frontier[i].mirrorSequence);
+                var mg = mirrorGeos[m];
+                Vector2 img = ReflectPointAcrossMirror(frontier[i].position, ref mg);
+                var prevSeq = frontier[i].mirrorSequence;
+                List<int> seq = new List<int>(prevSeq.Count + 1);
+                seq.AddRange(prevSeq);
                 seq.Add(m);
                 ImageNode node = new ImageNode { position = img, mirrorSequence = seq };
                 // 枝刈り：この段のミラーの法線正側に facingPoint がある想定のみ
-                Vector2 a = mirror.StartPoint;
-                Vector2 b = mirror.EndPoint;
-                Vector2 hitOnLine = ClosestPointOnLine(a, b, facingPoint);
+                Vector2 hitOnLine = ClosestPointOnLine(mg.a, mg.b, facingPoint);
                 Vector2 outv = (facingPoint - hitOnLine).normalized;
-                Vector2 n = mirror.GetNormal();
+                Vector2 n = mg.n;
                 if (Vector2.Dot(outv, n) <= EPS_FRONT) continue;
-
+                // 重複削減
+                int xq = Mathf.RoundToInt(img.x * DEDUP_QUANT);
+                int yq = Mathf.RoundToInt(img.y * DEDUP_QUANT);
+                var key = (m, xq, yq);
+                if (seen.Contains(key)) continue;
+                seen.Add(key);
                 next.Add(node);
             }
         }
@@ -241,7 +245,7 @@ public class LightPathfinder : MonoBehaviour
     }
 
     // 2つのフロンティア集合の間で接続可能なペアを探し、見つかれば検証してパスを返す
-    private bool TryConnectLayers(List<ImageNode> sideA, List<ImageNode> sideB, Vector2 source, Vector2 target, out List<Vector2> path, ref int connectionChecks)
+    private bool TryConnectLayers(List<ImageNode> sideA, List<ImageNode> sideB, Vector2 source, Vector2 target, out List<Vector2> path, ref int connectionChecks, MirrorGeo[] mirrorGeos)
     {
         path = null;
         for (int i = 0; i < sideA.Count; i++)
@@ -256,6 +260,11 @@ public class LightPathfinder : MonoBehaviour
                 // 鏡列合成: source側 seqA と target側 seqB を逆順に連結
                 var seqA = sideA[i].mirrorSequence;
                 var seqB = sideB[j].mirrorSequence;
+                // 末尾ミラーが同一なら、直近で同一鏡の連続反射になるため枝刈り
+                if (seqA.Count > 0 && seqB.Count > 0 && seqA[seqA.Count - 1] == seqB[seqB.Count - 1])
+                {
+                    continue;
+                }
                 List<int> combined = new List<int>(seqA.Count + seqB.Count);
                 combined.AddRange(seqA);
                 for (int k = seqB.Count - 1; k >= 0; k--) combined.Add(seqB[k]);
@@ -264,13 +273,14 @@ public class LightPathfinder : MonoBehaviour
                 Vector2 combinedImage = pa;
                 for (int k = seqB.Count - 1; k >= 0; k--)
                 {
-                    combinedImage = ReflectPointAcrossMirror(combinedImage, mirrors[seqB[k]]);
+                    var mg = mirrorGeos[seqB[k]];
+                    combinedImage = ReflectPointAcrossMirror(combinedImage, ref mg);
                 }
 
                 var nodeCombined = new ImageNode { position = combinedImage, mirrorSequence = combined };
-                if (ValidateAndBuildPath(source, target, nodeCombined))
+                if (ValidateAndBuildPath(source, target, nodeCombined, mirrorGeos))
                 {
-                    path = BuildFullPathPoints(source, target, nodeCombined);
+                    path = BuildFullPathPoints(source, target, nodeCombined, mirrorGeos);
                     return true;
                 }
             }
@@ -280,6 +290,14 @@ public class LightPathfinder : MonoBehaviour
     #endregion
 
     #region Geometry Helpers
+    // ミラー幾何キャッシュ用の軽量構造体
+    private struct MirrorGeo
+    {
+        public Vector2 a; // StartPoint
+        public Vector2 b; // EndPoint
+        public Vector2 n; // 法線（正規化済み）
+    }
+
     // 像のノード
     private struct ImageNode
     {
@@ -309,9 +327,23 @@ public class LightPathfinder : MonoBehaviour
         return p - 2f * dist * n;
     }
 
+    // キャッシュ済み幾何を使う反射
+    private static Vector2 ReflectPointAcrossMirror(Vector2 p, ref MirrorGeo mg)
+    {
+        Vector2 ap = p - mg.a;
+        float dist = Vector2.Dot(ap, mg.n);
+        return p - 2f * dist * mg.n;
+    }
+
     private bool IntersectLineWithMirror(Vector2 p1, Vector2 p2, Mirror2D mirror, out Vector2 hit)
     {
         return LineLineIntersection(p1, p2, mirror.StartPoint, mirror.EndPoint, out hit);
+    }
+
+    // キャッシュ済み幾何を使う交差判定（無限直線 vs 線分ライン）
+    private bool IntersectLineWithMirror(Vector2 p1, Vector2 p2, ref MirrorGeo mg, out Vector2 hit)
+    {
+        return LineLineIntersection(p1, p2, mg.a, mg.b, out hit);
     }
 
     private static bool LineLineIntersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, out Vector2 intersection)
@@ -362,9 +394,9 @@ public class LightPathfinder : MonoBehaviour
     /// ターゲットから仮想光源へ向かう直線を、像生成の鏡列を逆順にたどって交点を求め、
     /// 各交点が線分上であること・反射則が成り立つこと・障害物に遮られないことを検証します。
     /// </summary>
-    private bool ValidateAndBuildPath(Vector2 source, Vector2 target, ImageNode image)
+    private bool ValidateAndBuildPath(Vector2 source, Vector2 target, ImageNode image, MirrorGeo[] mirrorGeos)
     {
-        var points = BuildFullPathPoints(source, target, image);
+        var points = BuildFullPathPoints(source, target, image, mirrorGeos);
         if (points == null || points.Count < 2) return false;
         for (int i = 1; i < points.Count - 1; i++)
         {
@@ -373,9 +405,9 @@ public class LightPathfinder : MonoBehaviour
             var next = points[i + 1];
             int mirrorIndex = i - 1;
             if (mirrorIndex < 0 || mirrorIndex >= image.mirrorSequence.Count) return false;
-            var mirror = mirrors[image.mirrorSequence[mirrorIndex]];
+            var mg = mirrorGeos[image.mirrorSequence[mirrorIndex]];
             Vector2 inc = (cur - prev).normalized;
-            Vector2 n = mirror.GetNormal();
+            Vector2 n = mg.n;
             // 前面反射のみ許可
             if (Vector2.Dot(inc, n) > -EPS_FRONT) return false;
             Vector2 refl = ReflectVector(inc, n).normalized;
@@ -389,7 +421,7 @@ public class LightPathfinder : MonoBehaviour
         return true;
     }
 
-    private List<Vector2> BuildFullPathPoints(Vector2 source, Vector2 target, ImageNode image)
+    private List<Vector2> BuildFullPathPoints(Vector2 source, Vector2 target, ImageNode image, MirrorGeo[] mirrorGeos)
     {
         var seq = image.mirrorSequence;
         Vector2 virtualEndpoint = image.position;
@@ -398,12 +430,12 @@ public class LightPathfinder : MonoBehaviour
         var hitsReverse = new List<Vector2>();
         for (int i = seq.Count - 1; i >= 0; i--)
         {
-            var mirror = mirrors[seq[i]];
-            if (!IntersectLineWithMirror(lineFrom, lineTo, mirror, out Vector2 hit)) return null;
-            if (!IsOnSegment(hit, mirror.StartPoint, mirror.EndPoint)) return null;
+            var mg = mirrorGeos[seq[i]];
+            if (!IntersectLineWithMirror(lineFrom, lineTo, ref mg, out Vector2 hit)) return null;
+            if (!IsOnSegment(hit, mg.a, mg.b)) return null;
             hitsReverse.Add(hit);
-            virtualEndpoint = ReflectPointAcrossMirror(virtualEndpoint, mirror);
-            lineFrom = ReflectPointAcrossMirror(lineFrom, mirror);
+            virtualEndpoint = ReflectPointAcrossMirror(virtualEndpoint, ref mg);
+            lineFrom = ReflectPointAcrossMirror(lineFrom, ref mg);
             lineTo = virtualEndpoint;
         }
         var points = new List<Vector2>();
@@ -411,6 +443,31 @@ public class LightPathfinder : MonoBehaviour
         for (int i = hitsReverse.Count - 1; i >= 0; i--) points.Add(hitsReverse[i]);
         points.Add(target);
         return points;
+    }
+
+    // ミラー幾何を1回だけ構築
+    private MirrorGeo[] BuildMirrorGeometries()
+    {
+        int count = mirrors.Count;
+        var geos = new MirrorGeo[count];
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 a = mirrors[i].StartPoint;
+            Vector2 b = mirrors[i].EndPoint;
+            Vector2 dir = b - a;
+            Vector2 n;
+            if (dir.sqrMagnitude < 1e-12f)
+            {
+                n = Vector2.up; // デフォルト
+            }
+            else
+            {
+                dir.Normalize();
+                n = new Vector2(-dir.y, dir.x);
+            }
+            geos[i] = new MirrorGeo { a = a, b = b, n = n };
+        }
+        return geos;
     }
     #endregion
 
