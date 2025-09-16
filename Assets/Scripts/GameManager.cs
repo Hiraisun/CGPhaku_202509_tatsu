@@ -119,8 +119,6 @@ public class GameManager : MonoBehaviour
         MirrorsPlaced++;
         OnMirrorPlaced?.Invoke();
         
-        Debug.Log($"Mirror placed! Total: {MirrorsPlaced}/{maxMirrors}");
-        
         // 経路の再計算
         if (pathfinder != null)
         {

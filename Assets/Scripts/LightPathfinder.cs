@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 
 /// <summary>
 /// 2D におけるライトパス探索。
@@ -15,6 +14,11 @@ public class LightPathfinder : MonoBehaviour
     private const float EPS_SEGMENT = 1e-3f;
     private const float EPS_SHRINK = 1e-4f;
     private const float DEDUP_QUANT = 1000f; // 重複削減用の位置量子化係数（約1e-3精度）
+
+    // GC削減用の再利用バッファ
+    private readonly List<Vector2> _tmpHitsReverse = new List<Vector2>(32);
+    private readonly List<Vector2> _tmpPoints = new List<Vector2>(32);
+    private static readonly RaycastHit2D[] _rayBuffer = new RaycastHit2D[1];
 
     #region Inspector Fields / Results
     public Transform startPoint;
@@ -118,7 +122,11 @@ public class LightPathfinder : MonoBehaviour
     /// </summary>
     public bool IsReachableBidirectional(Vector2 source, Vector2 target, int maxDepth, out List<Vector2> path)
     {
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        System.Diagnostics.Stopwatch stopwatch = null;
+        if (enableDebugLog)
+        {
+            stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        }
         int totalNodesGenerated = 0;
         int connectionChecks = 0;
         path = null;
@@ -127,15 +135,18 @@ public class LightPathfinder : MonoBehaviour
         // 初期フロンティア
         List<ImageNode> frontS = new List<ImageNode> { new ImageNode { position = source, mirrorSequence = new List<int>() } };
         List<ImageNode> frontT = new List<ImageNode> { new ImageNode { position = target, mirrorSequence = new List<int>() } };
+        // 再利用バッファ
+        List<ImageNode> nextBuffer = new List<ImageNode>(Mathf.Max(16, mirrors.Count * 2));
+        var seenBuffer = new HashSet<(int,int,int)>(256);
         totalNodesGenerated = 2; // source + target
 
         // 深さ0での直通チェック
         if (IsSegmentClear(source, target, obstacleLayerMask))
         {
             var nodeZero = new ImageNode { position = source, mirrorSequence = new List<int>() };
-            if (ValidateAndBuildPath(source, target, nodeZero, mirrorGeos))
+            if (ValidateAndBuildPath(source, target, nodeZero, mirrorGeos, out var valid0))
             {
-                path = new List<Vector2> { source, target };
+                path = valid0;
                 LogDebugResult("直通成功", stopwatch, totalNodesGenerated, connectionChecks);
                 return true;
             }
@@ -147,50 +158,59 @@ public class LightPathfinder : MonoBehaviour
             bool expandSourceFirst = frontS.Count <= frontT.Count;
             if (expandSourceFirst)
             {
-                var nextS = ExpandOneLayer(frontS, target, mirrorGeos);
-                totalNodesGenerated += nextS.Count;
+                ExpandOneLayer(frontS, target, mirrorGeos, nextBuffer, seenBuffer);
+                totalNodesGenerated += nextBuffer.Count;
                 // 接続チェック：新規Sと既存/新規T
-                if (TryConnectLayers(nextS, frontT, source, target, out path, ref connectionChecks, mirrorGeos)) 
+                if (TryConnectLayers(nextBuffer, frontT, source, target, out path, ref connectionChecks, mirrorGeos)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                frontS = nextS;
+                // バッファをスワップして再利用
+                var tmpS = frontS;
+                frontS = nextBuffer;
+                nextBuffer = tmpS;
             }
             else
             {
-                var nextT = ExpandOneLayer(frontT, source, mirrorGeos);
-                totalNodesGenerated += nextT.Count;
-                if (TryConnectLayers(frontS, nextT, source, target, out path, ref connectionChecks, mirrorGeos)) 
+                ExpandOneLayer(frontT, source, mirrorGeos, nextBuffer, seenBuffer);
+                totalNodesGenerated += nextBuffer.Count;
+                if (TryConnectLayers(frontS, nextBuffer, source, target, out path, ref connectionChecks, mirrorGeos)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                frontT = nextT;
+                var tmpT = frontT;
+                frontT = nextBuffer;
+                nextBuffer = tmpT;
             }
 
             // 反対側も拡張
             if (expandSourceFirst)
             {
-                var nextT = ExpandOneLayer(frontT, source, mirrorGeos);
-                totalNodesGenerated += nextT.Count;
-                if (TryConnectLayers(frontS, nextT, source, target, out path, ref connectionChecks, mirrorGeos)) 
+                ExpandOneLayer(frontT, source, mirrorGeos, nextBuffer, seenBuffer);
+                totalNodesGenerated += nextBuffer.Count;
+                if (TryConnectLayers(frontS, nextBuffer, source, target, out path, ref connectionChecks, mirrorGeos)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                frontT = nextT;
+                var tmpT2 = frontT;
+                frontT = nextBuffer;
+                nextBuffer = tmpT2;
             }
             else
             {
-                var nextS = ExpandOneLayer(frontS, target, mirrorGeos);
-                totalNodesGenerated += nextS.Count;
-                if (TryConnectLayers(nextS, frontT, source, target, out path, ref connectionChecks, mirrorGeos)) 
+                ExpandOneLayer(frontS, target, mirrorGeos, nextBuffer, seenBuffer);
+                totalNodesGenerated += nextBuffer.Count;
+                if (TryConnectLayers(nextBuffer, frontT, source, target, out path, ref connectionChecks, mirrorGeos)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                frontS = nextS;
+                var tmpS2 = frontS;
+                frontS = nextBuffer;
+                nextBuffer = tmpS2;
             }
         }
         LogDebugResult("失敗", stopwatch, totalNodesGenerated, connectionChecks);
@@ -207,13 +227,12 @@ public class LightPathfinder : MonoBehaviour
     }
 
     // 片側のフロンティアを1段だけ展開。facingPoint は法線前面チェックに使用。
-    private List<ImageNode> ExpandOneLayer(List<ImageNode> frontier, Vector2 facingPoint, MirrorGeo[] mirrorGeos)
+    private void ExpandOneLayer(List<ImageNode> frontier, Vector2 facingPoint, MirrorGeo[] mirrorGeos, List<ImageNode> nextOut, HashSet<(int,int,int)> seen)
     {
-        List<ImageNode> next = new List<ImageNode>();
+        nextOut.Clear();
+        seen.Clear();
         int frontierCount = frontier.Count;
         int mirrorCount = mirrors.Count;
-        // 同層での重複像（同じミラー末尾かつ量子化座標一致）を抑制
-        var seen = new HashSet<(int,int,int)>();
         for (int i = 0; i < frontierCount; i++)
         {
             for (int m = 0; m < mirrorCount; m++)
@@ -238,10 +257,9 @@ public class LightPathfinder : MonoBehaviour
                 var key = (m, xq, yq);
                 if (seen.Contains(key)) continue;
                 seen.Add(key);
-                next.Add(node);
+                nextOut.Add(node);
             }
         }
-        return next;
     }
 
     // 2つのフロンティア集合の間で接続可能なペアを探し、見つかれば検証してパスを返す
@@ -278,9 +296,9 @@ public class LightPathfinder : MonoBehaviour
                 }
 
                 var nodeCombined = new ImageNode { position = combinedImage, mirrorSequence = combined };
-                if (ValidateAndBuildPath(source, target, nodeCombined, mirrorGeos))
+                if (ValidateAndBuildPath(source, target, nodeCombined, mirrorGeos, out var candidate))
                 {
-                    path = BuildFullPathPoints(source, target, nodeCombined, mirrorGeos);
+                    path = candidate;
                     return true;
                 }
             }
@@ -385,7 +403,13 @@ public class LightPathfinder : MonoBehaviour
         dir /= len;
         Vector2 aa = a + dir * EPS_SHRINK;
         Vector2 bb = b - dir * EPS_SHRINK;
-        return !Physics2D.Linecast(aa, bb, mask);
+        // RaycastNonAllocでGCゼロ化
+        Vector2 rayDir = (bb - aa);
+        float dist = rayDir.magnitude;
+        if (dist < 1e-6f) return true;
+        rayDir /= dist;
+        int hitCount = Physics2D.RaycastNonAlloc(aa, rayDir, _rayBuffer, dist, mask);
+        return hitCount == 0;
     }
     #endregion
 
@@ -394,8 +418,9 @@ public class LightPathfinder : MonoBehaviour
     /// ターゲットから仮想光源へ向かう直線を、像生成の鏡列を逆順にたどって交点を求め、
     /// 各交点が線分上であること・反射則が成り立つこと・障害物に遮られないことを検証します。
     /// </summary>
-    private bool ValidateAndBuildPath(Vector2 source, Vector2 target, ImageNode image, MirrorGeo[] mirrorGeos)
+    private bool ValidateAndBuildPath(Vector2 source, Vector2 target, ImageNode image, MirrorGeo[] mirrorGeos, out List<Vector2> builtPath)
     {
+        builtPath = null;
         var points = BuildFullPathPoints(source, target, image, mirrorGeos);
         if (points == null || points.Count < 2) return false;
         for (int i = 1; i < points.Count - 1; i++)
@@ -418,6 +443,7 @@ public class LightPathfinder : MonoBehaviour
         {
             if (!IsSegmentClear(points[i], points[i + 1], obstacleLayerMask | mirrorsLayerMask)) return false;
         }
+        builtPath = points;
         return true;
     }
 
@@ -427,22 +453,22 @@ public class LightPathfinder : MonoBehaviour
         Vector2 virtualEndpoint = image.position;
         Vector2 lineFrom = target;
         Vector2 lineTo = virtualEndpoint;
-        var hitsReverse = new List<Vector2>();
+        _tmpHitsReverse.Clear();
         for (int i = seq.Count - 1; i >= 0; i--)
         {
             var mg = mirrorGeos[seq[i]];
             if (!IntersectLineWithMirror(lineFrom, lineTo, ref mg, out Vector2 hit)) return null;
             if (!IsOnSegment(hit, mg.a, mg.b)) return null;
-            hitsReverse.Add(hit);
+            _tmpHitsReverse.Add(hit);
             virtualEndpoint = ReflectPointAcrossMirror(virtualEndpoint, ref mg);
             lineFrom = ReflectPointAcrossMirror(lineFrom, ref mg);
             lineTo = virtualEndpoint;
         }
-        var points = new List<Vector2>();
-        points.Add(source);
-        for (int i = hitsReverse.Count - 1; i >= 0; i--) points.Add(hitsReverse[i]);
-        points.Add(target);
-        return points;
+        _tmpPoints.Clear();
+        _tmpPoints.Add(source);
+        for (int i = _tmpHitsReverse.Count - 1; i >= 0; i--) _tmpPoints.Add(_tmpHitsReverse[i]);
+        _tmpPoints.Add(target);
+        return new List<Vector2>(_tmpPoints);
     }
 
     // ミラー幾何を1回だけ構築
