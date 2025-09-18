@@ -65,26 +65,40 @@ public class MirrorPlacer : MonoBehaviour
                 currentState = PlacementState.Idle;
             }
         }else if (Input.GetMouseButtonDown(1)){
-            if (currentState != PlacementState.Idle)
+            if (currentState == PlacementState.MirrorPlacing)
             {
                 currentState = PlacementState.Idle;
+                previewMirrorObject.transform.position = new Vector3(100, 100, 0);
                 OnPlacementCancelled?.Invoke();
                 Debug.Log("Placement cancelled");
             }
+        }
+
+        if (currentState == PlacementState.MirrorPlacing){
+            Vector2 position = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            Quaternion rotation = CalculateMirrorRotation(placementPosition, position);
+            previewMirrorObject.transform.rotation = rotation;
         }
     }
     
     private void PlaceMirror(Vector2 from, Vector2 to)
     {
-        Vector2 dir = to - from;
-        float rotation = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
-
-        GameObject newMirror = Instantiate(mirrorPrefab, from, Quaternion.Euler(0, 0, rotation));
+        Quaternion rotation = CalculateMirrorRotation(from, to);
+        GameObject newMirror = Instantiate(mirrorPrefab, from, rotation);
         placedMirrors.Add(newMirror);
+
+        previewMirrorObject.transform.position = new Vector3(100, 100, 0);
 
         // イベント発火
         OnMirrorPlaced?.Invoke();
         return;
+    }
+
+    private Quaternion CalculateMirrorRotation(Vector2 from, Vector2 to)
+    {
+        Vector2 dir = to - from;
+        float rotation = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+        return Quaternion.Euler(0, 0, rotation);
     }
     
     
