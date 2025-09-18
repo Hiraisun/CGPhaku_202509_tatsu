@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7926358003340951118}
   - component: {fileID: 8101039243661100181}
   - component: {fileID: 3684269397610539803}
+  - component: {fileID: 362263289445556036}
   m_Layer: 8
   m_Name: mirror_edit
   m_TagString: Untagged
@@ -152,3 +153,18 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.81, y: 0.27}
   m_EdgeRadius: 0
+--- !u!114 &362263289445556036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7528813632447440981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7647a91becfec3f4c92d1ab1bf1d86c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropShadow
+  parentRenderer: {fileID: 7926358003340951118}
+  shadowOffset: {x: -0.02, y: -0.1, z: 0}
+  shadowMaterial: {fileID: 2100000, guid: b30b768d4974b0f459207d9e1b4f9082, type: 2}
