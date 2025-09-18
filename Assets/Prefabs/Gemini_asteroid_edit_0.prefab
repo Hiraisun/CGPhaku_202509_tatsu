@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6500251023859196470}
   - component: {fileID: 5249177391802232222}
   - component: {fileID: 4548442111976094535}
+  - component: {fileID: 2655519363725986811}
   m_Layer: 7
   m_Name: Gemini_asteroid_edit_0
   m_TagString: Untagged
@@ -77,8 +78,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -282004731
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_Sprite: {fileID: -8867563349587418136, guid: 894e40a7660882a4390afd87f8bfa693, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -127,3 +128,18 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.52
+--- !u!114 &2655519363725986811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2379118876305241167}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7647a91becfec3f4c92d1ab1bf1d86c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropShadow
+  parentRenderer: {fileID: 5249177391802232222}
+  shadowOffset: {x: -0.02, y: -0.1, z: 0}
+  shadowColor: {r: 0, g: 0, b: 0, a: 1}
