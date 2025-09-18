@@ -469,6 +469,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1222865996}
   - component: {fileID: 1222865995}
+  - component: {fileID: 1222865997}
   m_Layer: 0
   m_Name: Gemini_asteroid_edit_0 (1)
   m_TagString: Untagged
@@ -549,6 +550,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1974835760}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -243.506}
+--- !u!114 &1222865997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222865994}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7647a91becfec3f4c92d1ab1bf1d86c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropShadow
+  parentRenderer: {fileID: 1222865995}
+  shadowOffset: {x: -0.02, y: -0.1, z: 0}
+  shadowMaterial: {fileID: 2100000, guid: b30b768d4974b0f459207d9e1b4f9082, type: 2}
 --- !u!1 &1366164452
 GameObject:
   m_ObjectHideFlags: 0
@@ -692,6 +708,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1974835760}
   - component: {fileID: 1974835759}
+  - component: {fileID: 1974835761}
   m_Layer: 0
   m_Name: tower_edit_0
   m_TagString: Untagged
@@ -773,6 +790,21 @@ Transform:
   - {fileID: 1222865996}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -207.097}
+--- !u!114 &1974835761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1974835758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7647a91becfec3f4c92d1ab1bf1d86c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropShadow
+  parentRenderer: {fileID: 1974835759}
+  shadowOffset: {x: -0.02, y: -0.1, z: 0}
+  shadowMaterial: {fileID: 2100000, guid: b30b768d4974b0f459207d9e1b4f9082, type: 2}
 --- !u!1 &1994674864
 GameObject:
   m_ObjectHideFlags: 0
@@ -783,6 +815,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1994674866}
   - component: {fileID: 1994674865}
+  - component: {fileID: 1994674867}
   m_Layer: 0
   m_Name: SpaceShip_edit_0
   m_TagString: Untagged
@@ -863,6 +896,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 5.049}
+--- !u!114 &1994674867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994674864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7647a91becfec3f4c92d1ab1bf1d86c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropShadow
+  parentRenderer: {fileID: 1994674865}
+  shadowOffset: {x: -0.02, y: -0.1, z: 0}
+  shadowMaterial: {fileID: 2100000, guid: b30b768d4974b0f459207d9e1b4f9082, type: 2}
 --- !u!1 &2021335605
 GameObject:
   m_ObjectHideFlags: 0

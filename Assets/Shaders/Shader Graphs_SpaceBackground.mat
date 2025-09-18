@@ -41,9 +41,10 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _scroll_speed: 0.002
+    - _smooth: 8.42
     - _speed: 0.001
     m_Colors:
-    - _BaseColor: {r: 0.06051976, g: 0.07955629, b: 0.1509434, a: 1}
+    - _BaseColor: {r: 0.13983671, g: 0.07088822, b: 0.254717, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

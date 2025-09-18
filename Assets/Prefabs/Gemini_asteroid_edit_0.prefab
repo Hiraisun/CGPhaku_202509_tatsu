@@ -142,4 +142,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DropShadow
   parentRenderer: {fileID: 5249177391802232222}
   shadowOffset: {x: -0.02, y: -0.1, z: 0}
-  shadowColor: {r: 0, g: 0, b: 0, a: 1}
+  shadowMaterial: {fileID: 2100000, guid: b30b768d4974b0f459207d9e1b4f9082, type: 2}

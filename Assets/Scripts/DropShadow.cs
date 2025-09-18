@@ -8,7 +8,7 @@ public class DropShadow : MonoBehaviour
     private SpriteRenderer parentRenderer;
 
     [SerializeField] private Vector3 shadowOffset = new(-0.1f, -0.1f, 0f);
-    [SerializeField] private Color shadowColor = new(0, 0, 0, 1f);
+    [SerializeField] private Material shadowMaterial;
 
     private GameObject shadowObject;
     private SpriteRenderer shadowRenderer;
@@ -26,7 +26,7 @@ public class DropShadow : MonoBehaviour
         shadowObject.transform.localScale = Vector3.one;
 
         shadowRenderer.sprite = parentRenderer.sprite;
-        shadowRenderer.color = shadowColor;
+        shadowRenderer.material = shadowMaterial;
         shadowRenderer.sortingLayerName = "Shadows";
         shadowRenderer.sortingOrder = parentRenderer.sortingOrder;
     }
