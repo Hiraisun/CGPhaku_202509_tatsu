@@ -21,7 +21,7 @@ public class DropShadow : MonoBehaviour
         shadowObject.transform.parent = transform;
         shadowRenderer = shadowObject.AddComponent<SpriteRenderer>();
   
-        shadowObject.transform.position = transform.position + shadowOffset;
+        UpdateShadowPosition();
         shadowObject.transform.localRotation = Quaternion.identity;
         shadowObject.transform.localScale = Vector3.one;
 
@@ -31,9 +31,21 @@ public class DropShadow : MonoBehaviour
         shadowRenderer.sortingOrder = parentRenderer.sortingOrder;
     }
 
+    void Update()
+    {
+        // 親の位置に追従
+        UpdateShadowPosition();
+    }
+
+    private void UpdateShadowPosition()
+    {
+        shadowObject.transform.position = transform.position + shadowOffset;
+        shadowObject.transform.rotation = transform.rotation;
+        shadowObject.transform.localScale = transform.localScale;
+    }
+
     void OnValidate()
     {
         parentRenderer = GetComponent<SpriteRenderer>();
-
     }
 }
