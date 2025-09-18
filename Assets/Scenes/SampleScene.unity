@@ -697,7 +697,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7fc0bf965cbb734d8b99a28287ee322, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MirrorPlacer
-  mirrorPrefab: {fileID: 5661202284560084638, guid: 8e606c0f4ec3e0140aa49c93c2d34ce9, type: 3}
+  mirrorPrefab: {fileID: 7528813632447440981, guid: 391e7180347557943a0276268de61ccc, type: 3}
 --- !u!1 &1974835758
 GameObject:
   m_ObjectHideFlags: 0
@@ -889,13 +889,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1994674864}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.044048414, w: 0.9990294}
-  m_LocalPosition: {x: -7.84, y: -4.41, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0.18201075, w: 0.9832966}
+  m_LocalPosition: {x: -7.76, y: -4.39, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 5.049}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -20.974}
 --- !u!114 &1994674867
 MonoBehaviour:
   m_ObjectHideFlags: 0
