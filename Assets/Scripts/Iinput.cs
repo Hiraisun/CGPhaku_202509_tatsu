@@ -7,7 +7,6 @@ public interface IInput
 {
     // 純粋な入力イベント（状態に関係なく発火）
     event System.Action<Vector2> OnPositionInput;
-    event System.Action<Vector2> OnDirectionInput;
     event System.Action OnCancelInput;
     
     // 現在の状態を設定（MirrorPlacerが状態を教える）

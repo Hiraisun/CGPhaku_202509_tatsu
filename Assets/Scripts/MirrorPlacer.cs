@@ -7,27 +7,30 @@ using System.Collections.Generic;
 public class MirrorPlacer : MonoBehaviour
 {
     [Header("Configuration")]
-    public GameObject mirrorPrefab;
+    [SerializeField] private GameObject mirrorPrefab;
+    [SerializeField] private GameObject mirrorPreviewPrefab;
     
     // イベント
     public event System.Action OnMirrorPlaced;
     public event System.Action OnPlacementCancelled;
     
     // 内部状態
-    private IInput inputProvider;
+    // private IInput inputProvider;
     private Camera mainCamera;
     private List<GameObject> placedMirrors = new List<GameObject>();
     
     // 配置状態管理
     private enum PlacementState
     {
-        Idle,           // 待機中
-        PositionSet,    // 位置決定済み（方向待ち）
+        Disabled,       // 操作無効,演出中など
+        Idle,           // 操作有効,待機中
+        MirrorPlacing,    // 鏡配置中 (新規配置 or 方向変更)
+
     }
     
     private PlacementState currentState = PlacementState.Idle;
-    private Vector2 placementPosition;
-    private GameObject currentPreviewMirror;
+    private Vector2 placementPosition; // 設置中の位置（ワールド座標）
+    private GameObject previewMirrorObject;
     
     void Start()
     {
@@ -37,79 +40,53 @@ public class MirrorPlacer : MonoBehaviour
         {
             mainCamera = FindFirstObjectByType<Camera>();
         }
-        
-        // 入力プロバイダーの取得
-        inputProvider = GameManager.Instance.inputProvider;
-        inputProvider.Initialize();
-        
-        // イベント購読
-        inputProvider.OnPositionInput += HandlePositionInput;
-        inputProvider.OnDirectionInput += HandleDirectionInput;
-        inputProvider.OnCancelInput += HandleCancelInput;
-        
-        // 初期状態を設定
-        inputProvider.SetPlacementState(PlacementPhase.Idle);
+
+        // プレビュー鏡、未使用時は遠くに置いておく
+        previewMirrorObject = Instantiate(mirrorPreviewPrefab, new Vector3(100, 100, 0), Quaternion.identity);
     }
     
     void Update()
     {
-    }
-    
-    void OnDestroy()
-    {
-        // cleanup
-        if (inputProvider != null)
-        {
-            inputProvider.OnPositionInput -= HandlePositionInput;
-            inputProvider.OnDirectionInput -= HandleDirectionInput;
-            inputProvider.OnCancelInput -= HandleCancelInput;
-            inputProvider.Cleanup();
-        }
-    }
-    
-    
-    private void HandlePositionInput(Vector2 position)
-    {
-        if (currentState == PlacementState.Idle)
-        {
-            // 位置決定
-            placementPosition = position;
-            currentState = PlacementState.PositionSet;
-            inputProvider.SetPlacementState(PlacementPhase.PositionSet);
-        }
-    }
-    
-    private void HandleDirectionInput(Vector2 direction)
-    {
-        if (currentState == PlacementState.PositionSet)
-        {
-            // 回転決定（確定）
-            // 方向から回転を計算
-            Vector2 dir = direction - placementPosition;
-            float rotation = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
-            // 実際の鏡を作成
-            GameObject newMirror = Instantiate(mirrorPrefab, placementPosition, Quaternion.Euler(0, 0, rotation));
-            placedMirrors.Add(newMirror);
-            
-            // 状態をリセット
-            currentState = PlacementState.Idle;
-            inputProvider.SetPlacementState(PlacementPhase.Idle);
+        if (Input.GetMouseButtonDown(0)){
+            Vector2 position = mainCamera.ScreenToWorldPoint(Input.mousePosition);
 
-            // イベント発火
-            OnMirrorPlaced?.Invoke();
+            if (currentState == PlacementState.Idle)
+            {
+                // 位置決定
+                placementPosition = position;
+                previewMirrorObject.transform.position = position;
+
+                currentState = PlacementState.MirrorPlacing;
+            }
+            else if (currentState == PlacementState.MirrorPlacing){ // 配置確定----------------
+                // 実際の鏡を作成
+                PlaceMirror(placementPosition, position);
+                // 状態をリセット
+                currentState = PlacementState.Idle;
+            }
+        }else if (Input.GetMouseButtonDown(1)){
+            if (currentState != PlacementState.Idle)
+            {
+                currentState = PlacementState.Idle;
+                OnPlacementCancelled?.Invoke();
+                Debug.Log("Placement cancelled");
+            }
         }
     }
     
-    private void HandleCancelInput()
+    private void PlaceMirror(Vector2 from, Vector2 to)
     {
-        if (currentState != PlacementState.Idle)
-        {
-            currentState = PlacementState.Idle;
-            inputProvider.SetPlacementState(PlacementPhase.Idle);
-            OnPlacementCancelled?.Invoke();
-            Debug.Log("Placement cancelled");
-        }
+        Vector2 dir = to - from;
+        float rotation = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+
+        GameObject newMirror = Instantiate(mirrorPrefab, from, Quaternion.Euler(0, 0, rotation));
+        placedMirrors.Add(newMirror);
+
+        // イベント発火
+        OnMirrorPlaced?.Invoke();
+        return;
     }
+    
     
     public int GetPlacedMirrorCount()
     {
@@ -120,11 +97,31 @@ public class MirrorPlacer : MonoBehaviour
     {
         return new List<GameObject>(placedMirrors);
     }
-    
-    // スクリーン座標をワールド座標に変換
-    private Vector2 ScreenToWorldPosition(Vector2 screenPos)
+
+    public void ClearAllMirrors()
     {
-        if (mainCamera == null) return Vector2.zero;
-        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, mainCamera.nearClipPlane));
+        foreach (GameObject mirror in placedMirrors)
+        {
+            DestroyImmediate(mirror);
+        }
+        placedMirrors.Clear();
     }
+
+    #if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(MirrorPlacer))]
+    public class MirrorPlacerEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
+            MirrorPlacer mirrorPlacer = (MirrorPlacer)target;
+            UnityEditor.EditorGUILayout.Space();
+            if (GUILayout.Button("Mirror全削除"))
+            {
+                mirrorPlacer.ClearAllMirrors();
+                UnityEditor.EditorUtility.SetDirty(mirrorPlacer);
+            }
+        }
+    }
+    #endif
 }

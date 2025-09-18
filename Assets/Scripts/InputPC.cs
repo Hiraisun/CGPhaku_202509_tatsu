@@ -10,7 +10,6 @@ public class InputPC : MonoBehaviour, IInput
     
     // IInput実装
     public event System.Action<Vector2> OnPositionInput;
-    public event System.Action<Vector2> OnDirectionInput;
     public event System.Action OnCancelInput;
     public bool IsInputActive { get; private set; }
     
@@ -33,14 +32,7 @@ public class InputPC : MonoBehaviour, IInput
         // 左クリック（位置決定/方向決定）
         if (Input.GetMouseButtonDown(0))
         {
-            if (currentPhase == PlacementPhase.Idle)
-            {
-                OnPositionInput?.Invoke(worldPos);
-            }
-            else if (currentPhase == PlacementPhase.PositionSet)
-            {
-                OnDirectionInput?.Invoke(worldPos);
-            }
+            OnPositionInput?.Invoke(worldPos);
         }
         
         // 右クリック（キャンセル）
