@@ -36,7 +36,7 @@ public class LightPathfinder : MonoBehaviour
     [Tooltip("デバッグ情報をログ出力するか")]
     public bool enableDebugLog = false;
     public List<Vector2> lastValidPath = new();
-    public bool lastReachable;
+    private bool lastReachable;
     #endregion
 
     #region Lifecycle / Entry
@@ -62,16 +62,12 @@ public class LightPathfinder : MonoBehaviour
     /// <summary>
     /// 現在の設定で光路探索を実行し、結果を <see cref="lastValidPath"/> と <see cref="lastReachable"/> に保存。
     /// </summary>
-    public void FindPath()
+    public bool FindPath()
     {
         lastValidPath?.Clear();
-        if (startPoint == null || endPoint == null)
-        {
-            lastReachable = false;
-            return;
-        }
         if (mirrors == null) mirrors = new List<Mirror2D>();
         lastReachable = IsReachableBidirectional(startPoint.position, endPoint.position, maxReflections, out lastValidPath);
+        return lastReachable;
     }
     
     /// <summary>

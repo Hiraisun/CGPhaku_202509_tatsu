@@ -12,8 +12,6 @@ public class GameManager : MonoBehaviour
     public enum GameState { Playing, Victory, Defeat, Menu }
     public GameState CurrentState { get; private set; } = GameState.Playing;
 
-    public int MirrorsPlaced { get; private set; }
-    public bool IsReachable { get; private set; }
     #endregion
     
     #region Game Configuration
@@ -26,12 +24,11 @@ public class GameManager : MonoBehaviour
     public LightPathfinder pathfinder;
     public MirrorPlacer mirrorPlacer;
     public IInput inputProvider;
+    public ClearLaserProjector clearLaserProjector;
     #endregion
     
     #region Events
     public event System.Action<GameState> OnStateChanged;
-    public event System.Action OnMirrorPlaced; //鏡配置時のイベント
-    public event System.Action OnReachabilityChanged; //経路変更時のイベント
     #endregion
     
     #region Unity Lifecycle
@@ -116,27 +113,15 @@ public class GameManager : MonoBehaviour
     
     private void OnMirrorPlacedInternal()
     {
-        MirrorsPlaced++;
-        OnMirrorPlaced?.Invoke();
         
         // 経路の再計算
-        if (pathfinder != null)
+        bool IsReachable = pathfinder.FindPath();
+        
+        // 勝利条件のチェック
+        if (IsReachable)
         {
-            pathfinder.FindPath();
-            bool wasReachable = IsReachable;
-            IsReachable = pathfinder.lastReachable;
-            
-            if (IsReachable != wasReachable)
-            {
-                OnReachabilityChanged?.Invoke();
-                Debug.Log($"Reachability changed: {IsReachable}");
-            }
-            
-            // 勝利条件のチェック
-            if (IsReachable)
-            {
-                ChangeState(GameState.Victory);
-            }
+            clearLaserProjector.ProjectLaser(pathfinder.lastValidPath);
+            ChangeState(GameState.Victory);
         }
     }
     #endregion

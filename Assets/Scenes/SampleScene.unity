@@ -576,6 +576,7 @@ GameObject:
   - component: {fileID: 1366164453}
   - component: {fileID: 1366164456}
   - component: {fileID: 1366164454}
+  - component: {fileID: 1366164457}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -623,7 +624,6 @@ MonoBehaviour:
   mirrors: []
   enableDebugLog: 1
   lastValidPath: []
-  lastReachable: 0
 --- !u!114 &1366164456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -639,6 +639,19 @@ MonoBehaviour:
   maxMirrors: 10
   pathfinder: {fileID: 1366164454}
   mirrorPlacer: {fileID: 1867982662}
+  clearLaserProjector: {fileID: 1366164457}
+--- !u!114 &1366164457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1366164452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10089168059724d46898aec698d4fba2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClearLaserProjector
 --- !u!1 &1867982659
 GameObject:
   m_ObjectHideFlags: 0
