@@ -324,7 +324,7 @@ MonoBehaviour:
   m_Intensity: 1
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 000000009954bbda05f330ef
+  m_ApplyToSortingLayers: 000000009954bbda05f330ef65580fb7
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0
@@ -762,6 +762,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClearLaserProjector
   laserPrefab: {fileID: 2681619880893879226, guid: 9fdea28bc99513c45bee2b254bc2e8a5, type: 3}
   startParticlePrefab: {fileID: 7468062994523783893, guid: 25704d9f647fa8d4ab803a54435248b5, type: 3}
+  middleParticlePrefab: {fileID: 1596143720931700224, guid: f95ca5e8d0d5144408f300c3b23d965a, type: 3}
 --- !u!1 &1974835758
 GameObject:
   m_ObjectHideFlags: 0

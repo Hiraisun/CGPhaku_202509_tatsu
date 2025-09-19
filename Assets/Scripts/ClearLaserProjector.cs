@@ -8,6 +8,7 @@ public class ClearLaserProjector : MonoBehaviour
     private LineRenderer lineRenderer;
 
     [SerializeField] private GameObject startParticlePrefab;
+    [SerializeField] private GameObject middleParticlePrefab;
 
     void Awake()
     {
@@ -27,6 +28,10 @@ public class ClearLaserProjector : MonoBehaviour
         if (path.Count > 1)
         {
             startParticleObject.transform.right = (path[1] - path[0]);
+        }
+
+        for (int i = 1; i < path.Count; i++){
+            GameObject middleParticleObject = Instantiate(middleParticlePrefab, path[i], Quaternion.identity);
         }
     }
 }
