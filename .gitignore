@@ -76,5 +76,6 @@ crashlytics-build.properties
 
 
 # AssetStore
-/[Aa]ssets/proTools/
-/[Aa]ssets/Vendor/
+/Assets/proTools/
+/Assets/Vendor/
+/Assets/FullOpaqueSpell/

@@ -41,7 +41,6 @@ public class DropShadow : MonoBehaviour
     {
         shadowObject.transform.position = transform.position + shadowOffset;
         shadowObject.transform.rotation = transform.rotation;
-        shadowObject.transform.localScale = transform.localScale;
     }
 
     void OnValidate()
