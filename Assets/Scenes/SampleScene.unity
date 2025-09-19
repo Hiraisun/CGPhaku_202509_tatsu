@@ -280,12 +280,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 595666919}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.202, y: 3.536, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: 0.9721721, w: -0.23426804}
+  m_LocalPosition: {x: 0.12720689, y: 0.65369385, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1974835760}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &619394800
 GameObject:
@@ -395,12 +395,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1055287944}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.28, y: -3.33, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: 0.18201075, w: 0.9832966}
+  m_LocalPosition: {x: 0.6240175, y: 1.0038737, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1994674866}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1099333370
 PrefabInstance:
@@ -416,11 +416,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.5069692
+      value: 0.65
       objectReference: {fileID: 0}
     - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.3681333
+      value: 0.37
       objectReference: {fileID: 0}
     - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
       propertyPath: m_LocalPosition.z
@@ -624,10 +624,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1366164453}
   - component: {fileID: 1366164456}
-  - component: {fileID: 1366164454}
-  - component: {fileID: 1366164457}
   m_Layer: 0
-  m_Name: Manager
+  m_Name: ManagerDontDestoroy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -645,34 +643,9 @@ Transform:
   m_LocalPosition: {x: -0.1, y: -0.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1867982660}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1366164454
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1366164452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8334c2ca804158b45bb5155e967f1760, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LightPathfinder
-  startPoint: {fileID: 1055287945}
-  endPoint: {fileID: 595666920}
-  maxReflections: 5
-  obstacleLayerMask:
-    serializedVersion: 2
-    m_Bits: 128
-  mirrorsLayerMask:
-    serializedVersion: 2
-    m_Bits: 256
-  mirrors: []
-  enableDebugLog: 1
-  lastValidPath: []
 --- !u!114 &1366164456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -686,21 +659,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   maxMirrors: 10
-  pathfinder: {fileID: 1366164454}
+  pathfinder: {fileID: 1867982663}
   mirrorPlacer: {fileID: 1867982662}
-  clearLaserProjector: {fileID: 1366164457}
---- !u!114 &1366164457
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1366164452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 10089168059724d46898aec698d4fba2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClearLaserProjector
+  clearLaserProjector: {fileID: 1867982664}
 --- !u!1 &1867982659
 GameObject:
   m_ObjectHideFlags: 0
@@ -710,10 +671,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1867982660}
+  - component: {fileID: 1867982663}
   - component: {fileID: 1867982662}
   - component: {fileID: 1867982661}
+  - component: {fileID: 1867982664}
   m_Layer: 0
-  m_Name: Input
+  m_Name: InGameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -728,11 +691,11 @@ Transform:
   m_GameObject: {fileID: 1867982659}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.7690501, y: 0.83808, z: 0}
+  m_LocalPosition: {x: -2.86905, y: 0.038079977, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1366164453}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1867982661
 MonoBehaviour:
@@ -761,6 +724,44 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MirrorPlacer
   mirrorPrefab: {fileID: 7528813632447440981, guid: 391e7180347557943a0276268de61ccc, type: 3}
   mirrorPreviewPrefab: {fileID: 1556064415572263436, guid: 51b87fb738d970643bd2c0413a74339d, type: 3}
+--- !u!114 &1867982663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8334c2ca804158b45bb5155e967f1760, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LightPathfinder
+  startPoint: {fileID: 1055287945}
+  endPoint: {fileID: 595666920}
+  maxReflections: 5
+  obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  mirrorsLayerMask:
+    serializedVersion: 2
+    m_Bits: 256
+  mirrors: []
+  enableDebugLog: 1
+  lastValidPath: []
+--- !u!114 &1867982664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10089168059724d46898aec698d4fba2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClearLaserProjector
+  laserPrefab: {fileID: 2681619880893879226, guid: 9fdea28bc99513c45bee2b254bc2e8a5, type: 3}
+  startParticlePrefab: {fileID: 7468062994523783893, guid: 25704d9f647fa8d4ab803a54435248b5, type: 3}
 --- !u!1 &1974835758
 GameObject:
   m_ObjectHideFlags: 0
@@ -851,6 +852,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1222865996}
+  - {fileID: 595666920}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -207.097}
 --- !u!114 &1974835761
@@ -956,7 +958,8 @@ Transform:
   m_LocalPosition: {x: -7.76, y: -4.39, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1055287945}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -20.974}
 --- !u!114 &1994674867
@@ -1068,13 +1071,12 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1366164453}
+  - {fileID: 1867982660}
   - {fileID: 519420032}
   - {fileID: 1292653198}
   - {fileID: 619394802}
   - {fileID: 2021335607}
-  - {fileID: 1055287945}
-  - {fileID: 595666920}
-  - {fileID: 1366164453}
   - {fileID: 1994674866}
   - {fileID: 1974835760}
   - {fileID: 1099333370}

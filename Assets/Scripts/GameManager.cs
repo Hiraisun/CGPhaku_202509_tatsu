@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     
     #region Game State
-    public enum GameState { Playing, Victory, Defeat, Menu }
+    public enum GameState { Playing, Success, Defeat, Menu }
     public GameState CurrentState { get; private set; } = GameState.Playing;
 
     #endregion
@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour
             case GameState.Playing:
                 StartGame();
                 break;
-            case GameState.Victory:
+            case GameState.Success:
                 break;
             case GameState.Defeat:
                 break;
@@ -121,7 +121,7 @@ public class GameManager : MonoBehaviour
         if (IsReachable)
         {
             clearLaserProjector.ProjectLaser(pathfinder.lastValidPath);
-            ChangeState(GameState.Victory);
+            ChangeState(GameState.Success);
         }
     }
     #endregion
@@ -137,7 +137,7 @@ public class GameManager : MonoBehaviour
     [ContextMenu("Force Victory")]
     private void ForceVictory()
     {
-        ChangeState(GameState.Victory);
+        ChangeState(GameState.Success);
     }
     
     [ContextMenu("Force Defeat")]
