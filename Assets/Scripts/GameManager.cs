@@ -25,6 +25,7 @@ public class GameManager : MonoBehaviour
     public MirrorPlacer mirrorPlacer;
     public ClearLaserProjector clearLaserProjector;
     public RandomStageGenerate randomStageGenerate;
+    public UIManager uiManager;
     #endregion
     
     #region Events
@@ -73,10 +74,15 @@ public class GameManager : MonoBehaviour
         mirrorPlacer = FindFirstObjectByType<MirrorPlacer>();
         clearLaserProjector = FindFirstObjectByType<ClearLaserProjector>();
         randomStageGenerate = FindFirstObjectByType<RandomStageGenerate>();
+        uiManager = FindFirstObjectByType<UIManager>();
         
         // イベントの購読
         mirrorPlacer.OnMirrorPlaced += OnMirrorPlacedInternal;
 
+        // 初期化
+        mirrorPlacer.Initialize();
+
+        // ステージ生成
         do{
             randomStageGenerate.GenerateStage(1);
         }while (!pathfinder.IsDirectlyReachable(pathfinder.startPoint.position, pathfinder.endPoint.position));
@@ -118,7 +124,10 @@ public class GameManager : MonoBehaviour
     #region Game Logic
     private void OnMirrorPlacedInternal()
     {
-        
+        int mirrorCount = mirrorPlacer.GetPlacedMirrorCount();
+        int remainMirrorCount = maxMirrors - mirrorCount;
+        uiManager.UpdateMirrorCountText(remainMirrorCount);
+
         // 経路の再計算
         bool IsReachable = pathfinder.FindPath();
         
@@ -127,6 +136,15 @@ public class GameManager : MonoBehaviour
         {
             clearLaserProjector.ProjectLaser(pathfinder.lastValidPath);
             ChangeState(GameState.Success);
+
+            mirrorPlacer.DisablePlacement();
+        }
+
+        // 敗北条件
+        if (mirrorPlacer.GetPlacedMirrorCount() >= maxMirrors)
+        {
+            ChangeState(GameState.Defeat);
+            mirrorPlacer.DisablePlacement();
         }
     }
     #endregion

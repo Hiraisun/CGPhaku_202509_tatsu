@@ -28,13 +28,12 @@ public class MirrorPlacer : MonoBehaviour
 
     }
     
-    private PlacementState currentState = PlacementState.Idle;
+    private PlacementState currentState;
     private Vector2 placementPosition; // 設置中の位置（ワールド座標）
     private GameObject previewMirrorObject;
-    
-    void Start()
+
+    public void Initialize()
     {
-        // initialize
         mainCamera = Camera.main;
         if (mainCamera == null)
         {
@@ -43,6 +42,13 @@ public class MirrorPlacer : MonoBehaviour
 
         // プレビュー鏡、未使用時は遠くに置いておく
         previewMirrorObject = Instantiate(mirrorPreviewPrefab, new Vector3(100, 100, 0), Quaternion.identity);
+
+        currentState = PlacementState.Idle;
+    }
+
+    public void DisablePlacement()
+    {
+        currentState = PlacementState.Disabled;
     }
     
     void Update()
@@ -52,17 +58,17 @@ public class MirrorPlacer : MonoBehaviour
 
             if (currentState == PlacementState.Idle)
             {
+                currentState = PlacementState.MirrorPlacing;
                 // 位置決定
                 placementPosition = position;
                 previewMirrorObject.transform.position = position;
-
-                currentState = PlacementState.MirrorPlacing;
             }
             else if (currentState == PlacementState.MirrorPlacing){ // 配置確定----------------
-                // 実際の鏡を作成
-                PlaceMirror(placementPosition, position);
                 // 状態をリセット
                 currentState = PlacementState.Idle;
+                // 実際の鏡を作成
+                PlaceMirror(placementPosition, position);
+                
             }
         }else if (Input.GetMouseButtonDown(1)){
             if (currentState == PlacementState.MirrorPlacing)
@@ -70,7 +76,6 @@ public class MirrorPlacer : MonoBehaviour
                 currentState = PlacementState.Idle;
                 previewMirrorObject.transform.position = new Vector3(100, 100, 0);
                 OnPlacementCancelled?.Invoke();
-                Debug.Log("Placement cancelled");
             }
         }
 

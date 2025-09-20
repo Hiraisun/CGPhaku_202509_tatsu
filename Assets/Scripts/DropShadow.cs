@@ -7,7 +7,7 @@ public class DropShadow : MonoBehaviour
     [SerializeField]
     private SpriteRenderer parentRenderer;
 
-    [SerializeField] private Vector3 shadowOffset = new(-0.1f, -0.1f, 0f);
+    private Vector3 shadowOffset = new(-0.1f, -0.2f, 0f);
     [SerializeField] private Material shadowMaterial;
 
     private GameObject shadowObject;
