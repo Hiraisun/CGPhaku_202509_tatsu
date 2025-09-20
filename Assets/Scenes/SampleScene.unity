@@ -701,63 +701,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 391e7180347557943a0276268de61ccc, type: 3}
---- !u!1001 &1099333370
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2379118876305241167, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_Name
-      value: Gemini_asteroid_edit_0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.65
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.37
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6500251023859196470, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
 --- !u!1 &1222865994
 GameObject:
   m_ObjectHideFlags: 0
@@ -974,6 +917,7 @@ GameObject:
   - component: {fileID: 1867982662}
   - component: {fileID: 1867982661}
   - component: {fileID: 1867982664}
+  - component: {fileID: 1867982665}
   m_Layer: 0
   m_Name: InGameManager
   m_TagString: Untagged
@@ -1068,6 +1012,25 @@ MonoBehaviour:
   laserPrefab: {fileID: 2681619880893879226, guid: 9fdea28bc99513c45bee2b254bc2e8a5, type: 3}
   startParticlePrefab: {fileID: 7468062994523783893, guid: 25704d9f647fa8d4ab803a54435248b5, type: 3}
   middleParticlePrefab: {fileID: 1596143720931700224, guid: f95ca5e8d0d5144408f300c3b23d965a, type: 3}
+--- !u!114 &1867982665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64293f8eebe6c62439205c32d2e7fd3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RandomStageGenerate
+  asteroidPrefab: {fileID: 2379118876305241167, guid: f58441d93d15ed24ca907329b886b5f9, type: 3}
+  stageSize: {x: 10, y: 6}
+  safeAreas:
+  - {x: -6.98, y: -3.81, z: 3}
+  - {x: 7.77, y: 4.16, z: 3}
+  asteroidCount: 30
+  asteroidSizeRange: {x: 1, y: 2}
 --- !u!1 &1974835758
 GameObject:
   m_ObjectHideFlags: 0
@@ -1377,8 +1340,8 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1366164453}
   - {fileID: 1867982660}
+  - {fileID: 1366164453}
   - {fileID: 690232596}
   - {fileID: 519420032}
   - {fileID: 1292653198}
@@ -1386,6 +1349,5 @@ SceneRoots:
   - {fileID: 2021335607}
   - {fileID: 1994674866}
   - {fileID: 1974835760}
-  - {fileID: 1099333370}
   - {fileID: 882320254}
   - {fileID: 1079962282}
