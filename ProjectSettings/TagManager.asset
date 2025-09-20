@@ -44,6 +44,9 @@ TagManager:
   - name: Shadows
     uniqueID: 3669709977
     locked: 0
+  - name: Laser
+    uniqueID: 2569705689
+    locked: 0
   - name: Objects
     uniqueID: 4012962565
     locked: 0
