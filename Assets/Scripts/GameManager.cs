@@ -27,6 +27,7 @@ public class GameManager : MonoBehaviour
     public RandomStageGenerate randomStageGenerate;
     public UIManager uiManager;
     public TestLasar testLasar;
+    public SoundPlayer soundPlayer;
     #endregion
     
     #region Events
@@ -77,12 +78,14 @@ public class GameManager : MonoBehaviour
         randomStageGenerate = FindFirstObjectByType<RandomStageGenerate>();
         uiManager = FindFirstObjectByType<UIManager>();
         testLasar = FindFirstObjectByType<TestLasar>();
+        soundPlayer = FindFirstObjectByType<SoundPlayer>();
         // イベントの購読
         mirrorPlacer.OnMirrorPlaced += OnMirrorPlacedInternal;
         uiManager.OnRetryRequested += OnRetryRequestedInternal;
 
         // 初期化
         mirrorPlacer.Initialize();
+        soundPlayer.Initialize();
 
         // ステージ生成
         randomStageGenerate.GenerateStage(3);
@@ -141,9 +144,7 @@ public class GameManager : MonoBehaviour
             testLasar.enableDebug = true;
             uiManager.ShowSuccessPanel();
         }
-
-        // 敗北条件
-        if (mirrorPlacer.GetPlacedMirrorCount() >= maxMirrors)
+        else if (mirrorPlacer.GetPlacedMirrorCount() >= maxMirrors) // 敗北
         {
             ChangeState(GameState.Defeat);
             mirrorPlacer.DisablePlacement();

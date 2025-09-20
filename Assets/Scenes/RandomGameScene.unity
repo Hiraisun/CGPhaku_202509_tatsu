@@ -618,8 +618,8 @@ LineRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -1725261607
-  m_SortingLayer: 2
+  m_SortingLayerID: -1223731099
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Positions:
   - {x: 0, y: 0, z: 0}
@@ -1352,9 +1352,10 @@ MonoBehaviour:
   pathfinder: {fileID: 1867982663}
   mirrorPlacer: {fileID: 1867982662}
   clearLaserProjector: {fileID: 1867982664}
-  randomStageGenerate: {fileID: 0}
-  uiManager: {fileID: 0}
-  testLasar: {fileID: 0}
+  randomStageGenerate: {fileID: 1867982665}
+  uiManager: {fileID: 1867982666}
+  testLasar: {fileID: 690232595}
+  soundPlayer: {fileID: 1867982668}
 --- !u!1 &1867982659
 GameObject:
   m_ObjectHideFlags: 0
@@ -1370,6 +1371,8 @@ GameObject:
   - component: {fileID: 1867982664}
   - component: {fileID: 1867982665}
   - component: {fileID: 1867982666}
+  - component: {fileID: 1867982668}
+  - component: {fileID: 1867982667}
   m_Layer: 0
   m_Name: InGameManager
   m_TagString: Untagged
@@ -1497,6 +1500,121 @@ MonoBehaviour:
   successPanel: {fileID: 2130038713}
   failedPanel: {fileID: 857325078}
   retryButton: {fileID: 1288008865}
+--- !u!82 &1867982667
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &1867982668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 127850d8a60633b4f9361f2c40d219f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SoundPlayer
+  setPositionSound: {fileID: 8300000, guid: f469b7c41e924ef438ff83810506d2d0, type: 3}
+  mirrorPlacedSound: {fileID: 8300000, guid: 1d39d7005e771b74492404d184de6b55, type: 3}
+  placementCancelledSound: {fileID: 8300000, guid: f0510ff53ad5cb6419bc96c78a363c16, type: 3}
+  startSound: {fileID: 8300000, guid: 2d18ce4a14f7a4241b94c56fc84c4bd4, type: 3}
+  successSound: {fileID: 8300000, guid: dce0bf936fefd414b853a1158d12e133, type: 3}
+  defeatSound: {fileID: 8300000, guid: cd6cbbee8b3db6c488b74794df642b85, type: 3}
 --- !u!1 &1886111890
 GameObject:
   m_ObjectHideFlags: 0

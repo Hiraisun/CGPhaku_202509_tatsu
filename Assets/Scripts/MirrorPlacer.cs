@@ -11,6 +11,7 @@ public class MirrorPlacer : MonoBehaviour
     [SerializeField] private GameObject mirrorPreviewPrefab;
     
     // イベント
+    public event System.Action OnPositionSet;
     public event System.Action OnMirrorPlaced;
     public event System.Action OnPlacementCancelled;
     
@@ -62,12 +63,14 @@ public class MirrorPlacer : MonoBehaviour
                 // 位置決定
                 placementPosition = position;
                 previewMirrorObject.transform.position = position;
+                OnPositionSet?.Invoke();
             }
             else if (currentState == PlacementState.MirrorPlacing){ // 配置確定----------------
                 // 状態をリセット
                 currentState = PlacementState.Idle;
                 // 実際の鏡を作成
                 PlaceMirror(placementPosition, position);
+                OnMirrorPlaced?.Invoke();
                 
             }
         }else if (Input.GetMouseButtonDown(1)){
@@ -93,9 +96,6 @@ public class MirrorPlacer : MonoBehaviour
         placedMirrors.Add(newMirror);
 
         previewMirrorObject.transform.position = new Vector3(100, 100, 0);
-
-        // イベント発火
-        OnMirrorPlaced?.Invoke();
         return;
     }
 
