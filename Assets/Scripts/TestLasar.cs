@@ -109,26 +109,28 @@ public class TestLasar : MonoBehaviour
         Vector2 r = p2 - p1;
         Vector2 s = p4 - p3;
         float rxs = r.x * s.y - r.y * s.x;
-        
         if (Mathf.Abs(rxs) < EPS_PARALLEL) return false;
         
         Vector2 qp = p3 - p1;
         float t = (qp.x * s.y - qp.y * s.x) / rxs;
         float u = (qp.x * r.y - qp.y * r.x) / rxs;
-        
-        intersection = p1 + t * r;
-        
-        // 両方の線分上にあるかチェック
-        return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+
+        if (t >= 0 && t <= 1 && u >= 0 && u <= 1){
+            intersection = p1 + t * r;
+            return true;
+        }
+
+        intersection = Vector2.zero;
+        return false;
     }
 
     /// <summary>
     /// ベクトルの反射計算
     /// </summary>
-    private Vector2 ReflectVector(Vector2 incident, Vector2 normal)
+    private static Vector2 ReflectVector(Vector2 v, Vector2 normal)
     {
-        Vector2 normalizedNormal = normal.normalized;
-        return incident - 2f * Vector2.Dot(incident, normalizedNormal) * normalizedNormal;
+        Vector2 nn = normal.normalized;
+        return v - 2f * Vector2.Dot(v, nn) * nn;
     }
 
     /// <summary>

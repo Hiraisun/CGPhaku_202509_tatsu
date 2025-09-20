@@ -20,7 +20,8 @@ public class LightPathfinder : MonoBehaviour
     private readonly List<Vector2> _tmpPoints = new List<Vector2>(32);
     private static readonly RaycastHit2D[] _rayBuffer = new RaycastHit2D[1];
 
-    #region Inspector Fields / Results
+    private System.Diagnostics.Stopwatch stopwatch;
+
     public Transform startPoint;
     public Transform endPoint;
 
@@ -36,13 +37,16 @@ public class LightPathfinder : MonoBehaviour
     [Tooltip("デバッグ情報をログ出力するか")]
     public bool enableDebugLog = false;
     public List<Vector2> lastValidPath = new();
-    private bool lastReachable;
-    #endregion
 
     #region Lifecycle / Entry
+
+    void Awake()
+    {
+
+    }
+
     void Start()
     {
-        AutoRegisterMirrors();
         FindPath();
     }
 
@@ -65,9 +69,8 @@ public class LightPathfinder : MonoBehaviour
     public bool FindPath()
     {
         lastValidPath?.Clear();
-        if (mirrors == null) mirrors = new List<Mirror2D>();
-        lastReachable = IsReachableBidirectional(startPoint.position, endPoint.position, maxReflections, out lastValidPath);
-        return lastReachable;
+        bool IsReachable = IsReachableBidirectional(startPoint.position, endPoint.position, maxReflections, out lastValidPath);
+        return IsReachable;
     }
     
     /// <summary>
@@ -81,11 +84,10 @@ public class LightPathfinder : MonoBehaviour
         // シーン内の全てのMirror2Dを検索
         Mirror2D[] allMirrors = FindObjectsByType<Mirror2D>(FindObjectsSortMode.None);
         
-        foreach (var mirror in allMirrors)
+        foreach (Mirror2D mirror in allMirrors)
         {
             mirrors.Add(mirror);
         }
-        
         Debug.Log($"LightPathfinder: {mirrors.Count}個のMirror2Dを自動登録しました");
     }
     
@@ -118,29 +120,32 @@ public class LightPathfinder : MonoBehaviour
     /// </summary>
     public bool IsReachableBidirectional(Vector2 source, Vector2 target, int maxDepth, out List<Vector2> path)
     {
-        System.Diagnostics.Stopwatch stopwatch = null;
         if (enableDebugLog)
         {
+            // 時間計測開始
             stopwatch = System.Diagnostics.Stopwatch.StartNew();
         }
-        int totalNodesGenerated = 0;
-        int connectionChecks = 0;
+
+        int totalNodesGenerated = 0; // 生成されたノード数
+        int connectionChecks = 0; // 接続チェック数
         path = null;
+        
         // この探索実行中のみ有効なミラー幾何キャッシュ
-        var mirrorGeos = BuildMirrorGeometries();
+        MirrorGeo[] mirrorGeos = BuildMirrorGeometries();
         // 初期フロンティア
         List<ImageNode> frontS = new List<ImageNode> { new ImageNode { position = source, mirrorSequence = new List<int>() } };
         List<ImageNode> frontT = new List<ImageNode> { new ImageNode { position = target, mirrorSequence = new List<int>() } };
+
         // 再利用バッファ
         List<ImageNode> nextBuffer = new List<ImageNode>(Mathf.Max(16, mirrors.Count * 2));
-        var seenBuffer = new HashSet<(int,int,int)>(256);
+        HashSet<(int,int,int)> seenBuffer = new HashSet<(int,int,int)>(256);
         totalNodesGenerated = 2; // source + target
 
         // 深さ0での直通チェック
         if (IsSegmentClear(source, target, obstacleLayerMask))
         {
-            var nodeZero = new ImageNode { position = source, mirrorSequence = new List<int>() };
-            if (ValidateAndBuildPath(source, target, nodeZero, mirrorGeos, out var valid0))
+            ImageNode nodeZero = new ImageNode { position = source, mirrorSequence = new List<int>() };
+            if (ValidateAndBuildPath(source, target, nodeZero, mirrorGeos, out List<Vector2> valid0))
             {
                 path = valid0;
                 LogDebugResult("直通成功", stopwatch, totalNodesGenerated, connectionChecks);
@@ -163,7 +168,7 @@ public class LightPathfinder : MonoBehaviour
                     return true;
                 }
                 // バッファをスワップして再利用
-                var tmpS = frontS;
+                List<ImageNode> tmpS = frontS;
                 frontS = nextBuffer;
                 nextBuffer = tmpS;
             }
@@ -176,7 +181,7 @@ public class LightPathfinder : MonoBehaviour
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                var tmpT = frontT;
+                List<ImageNode> tmpT = frontT;
                 frontT = nextBuffer;
                 nextBuffer = tmpT;
             }
@@ -191,7 +196,7 @@ public class LightPathfinder : MonoBehaviour
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                var tmpT2 = frontT;
+                List<ImageNode> tmpT2 = frontT;
                 frontT = nextBuffer;
                 nextBuffer = tmpT2;
             }
@@ -204,7 +209,7 @@ public class LightPathfinder : MonoBehaviour
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                var tmpS2 = frontS;
+                List<ImageNode> tmpS2 = frontS;
                 frontS = nextBuffer;
                 nextBuffer = tmpS2;
             }
@@ -235,22 +240,17 @@ public class LightPathfinder : MonoBehaviour
             {
                 if (frontier[i].mirrorSequence.Count > 0 && frontier[i].mirrorSequence[frontier[i].mirrorSequence.Count - 1] == m)
                     continue;
-                var mg = mirrorGeos[m];
+                MirrorGeo mg = mirrorGeos[m];
                 Vector2 img = ReflectPointAcrossMirror(frontier[i].position, ref mg);
-                var prevSeq = frontier[i].mirrorSequence;
+                List<int> prevSeq = frontier[i].mirrorSequence;
                 List<int> seq = new List<int>(prevSeq.Count + 1);
                 seq.AddRange(prevSeq);
                 seq.Add(m);
                 ImageNode node = new ImageNode { position = img, mirrorSequence = seq };
-                // 枝刈り：この段のミラーの法線正側に facingPoint がある想定のみ
-                Vector2 hitOnLine = ClosestPointOnLine(mg.a, mg.b, facingPoint);
-                Vector2 outv = (facingPoint - hitOnLine).normalized;
-                Vector2 n = mg.n;
-                if (Vector2.Dot(outv, n) <= EPS_FRONT) continue;
                 // 重複削減
                 int xq = Mathf.RoundToInt(img.x * DEDUP_QUANT);
                 int yq = Mathf.RoundToInt(img.y * DEDUP_QUANT);
-                var key = (m, xq, yq);
+                (int,int,int) key = (m, xq, yq);
                 if (seen.Contains(key)) continue;
                 seen.Add(key);
                 nextOut.Add(node);
@@ -272,8 +272,8 @@ public class LightPathfinder : MonoBehaviour
                 if (!IsSegmentClear(pa, pb, obstacleLayerMask)) continue;
 
                 // 鏡列合成: source側 seqA と target側 seqB を逆順に連結
-                var seqA = sideA[i].mirrorSequence;
-                var seqB = sideB[j].mirrorSequence;
+                List<int> seqA = sideA[i].mirrorSequence;
+                List<int> seqB = sideB[j].mirrorSequence;
                 // 末尾ミラーが同一なら、直近で同一鏡の連続反射になるため枝刈り
                 if (seqA.Count > 0 && seqB.Count > 0 && seqA[seqA.Count - 1] == seqB[seqB.Count - 1])
                 {
@@ -287,12 +287,12 @@ public class LightPathfinder : MonoBehaviour
                 Vector2 combinedImage = pa;
                 for (int k = seqB.Count - 1; k >= 0; k--)
                 {
-                    var mg = mirrorGeos[seqB[k]];
+                    MirrorGeo mg = mirrorGeos[seqB[k]];
                     combinedImage = ReflectPointAcrossMirror(combinedImage, ref mg);
                 }
 
-                var nodeCombined = new ImageNode { position = combinedImage, mirrorSequence = combined };
-                if (ValidateAndBuildPath(source, target, nodeCombined, mirrorGeos, out var candidate))
+                ImageNode nodeCombined = new ImageNode { position = combinedImage, mirrorSequence = combined };
+                if (ValidateAndBuildPath(source, target, nodeCombined, mirrorGeos, out List<Vector2> candidate))
                 {
                     path = candidate;
                     return true;
@@ -360,17 +360,29 @@ public class LightPathfinder : MonoBehaviour
         return LineLineIntersection(p1, p2, mg.a, mg.b, out hit);
     }
 
+    /// <summary>
+    /// 半直線と線分の交差判定
+    /// </summary>
     private static bool LineLineIntersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, out Vector2 intersection)
     {
         intersection = Vector2.zero;
         Vector2 r = p2 - p1;
         Vector2 s = p4 - p3;
-        float rxs = r.x * s.y - r.y * s.x;
+        float rxs = r.x * s.y - r.y * s.x; // 0なら平行, 交点なし
         if (Mathf.Abs(rxs) < EPS_PARALLEL) return false;
+        
         Vector2 qp = p3 - p1;
         float t = (qp.x * s.y - qp.y * s.x) / rxs;
-        intersection = p1 + t * r;
-        return true;
+        float u = (qp.x * r.y - qp.y * r.x) / rxs;
+
+        // 線分チェック
+        if (t >= 0 && u >= 0 && u <= 1){
+            intersection = p1 + t * r;
+            return true;
+        }
+
+        intersection = Vector2.zero;
+        return false;
     }
 
     private static bool IsOnSegment(Vector2 p, Vector2 a, Vector2 b)
@@ -385,26 +397,23 @@ public class LightPathfinder : MonoBehaviour
         return cross <= EPS_SEGMENT;
     }
 
+    /// <summary>
+    /// ベクトルの反射計算
+    /// </summary>
     private static Vector2 ReflectVector(Vector2 v, Vector2 normal)
     {
         Vector2 nn = normal.normalized;
         return v - 2f * Vector2.Dot(v, nn) * nn;
     }
 
+    /// <summary>
+    /// エッジ上に障害物がないかチェック
+    /// </summary>
     private static bool IsSegmentClear(Vector2 a, Vector2 b, LayerMask mask)
     {
-        Vector2 dir = b - a;
-        float len = dir.magnitude;
-        if (len < 1e-6f) return true;
-        dir /= len;
-        Vector2 aa = a + dir * EPS_SHRINK;
-        Vector2 bb = b - dir * EPS_SHRINK;
-        // RaycastNonAllocでGCゼロ化
-        Vector2 rayDir = (bb - aa);
-        float dist = rayDir.magnitude;
-        if (dist < 1e-6f) return true;
-        rayDir /= dist;
-        int hitCount = Physics2D.RaycastNonAlloc(aa, rayDir, _rayBuffer, dist, mask);
+        Vector2 direction = b - a;
+
+        int hitCount = Physics2D.RaycastNonAlloc(a, direction, _rayBuffer, direction.magnitude, mask);
         return hitCount == 0;
     }
     #endregion
@@ -417,16 +426,17 @@ public class LightPathfinder : MonoBehaviour
     private bool ValidateAndBuildPath(Vector2 source, Vector2 target, ImageNode image, MirrorGeo[] mirrorGeos, out List<Vector2> builtPath)
     {
         builtPath = null;
-        var points = BuildFullPathPoints(source, target, image, mirrorGeos);
+        List<Vector2> points = BuildFullPathPoints(source, target, image, mirrorGeos);
         if (points == null || points.Count < 2) return false;
+
         for (int i = 1; i < points.Count - 1; i++)
         {
-            var prev = points[i - 1];
-            var cur = points[i];
-            var next = points[i + 1];
+            Vector2 prev = points[i - 1];
+            Vector2 cur = points[i];
+            Vector2 next = points[i + 1];
             int mirrorIndex = i - 1;
             if (mirrorIndex < 0 || mirrorIndex >= image.mirrorSequence.Count) return false;
-            var mg = mirrorGeos[image.mirrorSequence[mirrorIndex]];
+            MirrorGeo mg = mirrorGeos[image.mirrorSequence[mirrorIndex]];
             Vector2 inc = (cur - prev).normalized;
             Vector2 n = mg.n;
             // 前面反射のみ許可
@@ -445,14 +455,14 @@ public class LightPathfinder : MonoBehaviour
 
     private List<Vector2> BuildFullPathPoints(Vector2 source, Vector2 target, ImageNode image, MirrorGeo[] mirrorGeos)
     {
-        var seq = image.mirrorSequence;
+        List<int> seq = image.mirrorSequence;
         Vector2 virtualEndpoint = image.position;
         Vector2 lineFrom = target;
         Vector2 lineTo = virtualEndpoint;
         _tmpHitsReverse.Clear();
         for (int i = seq.Count - 1; i >= 0; i--)
         {
-            var mg = mirrorGeos[seq[i]];
+            MirrorGeo mg = mirrorGeos[seq[i]];
             if (!IntersectLineWithMirror(lineFrom, lineTo, ref mg, out Vector2 hit)) return null;
             if (!IsOnSegment(hit, mg.a, mg.b)) return null;
             _tmpHitsReverse.Add(hit);
@@ -471,7 +481,7 @@ public class LightPathfinder : MonoBehaviour
     private MirrorGeo[] BuildMirrorGeometries()
     {
         int count = mirrors.Count;
-        var geos = new MirrorGeo[count];
+        MirrorGeo[] geos = new MirrorGeo[count];
         for (int i = 0; i < count; i++)
         {
             Vector2 a = mirrors[i].StartPoint;
