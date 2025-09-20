@@ -31,6 +31,7 @@ public class LightPathfinder : MonoBehaviour
     public LayerMask obstacleLayerMask;
     [Tooltip("遮蔽として扱う鏡の LayerMask（反射に使わない鏡は遮蔽）")]
     public LayerMask mirrorsLayerMask;
+    private LayerMask segmentCheckMask => obstacleLayerMask | mirrorsLayerMask;
     public List<Mirror2D> mirrors = new();
 
     [Header("Debug/Result")]
@@ -64,12 +65,13 @@ public class LightPathfinder : MonoBehaviour
     }
 
     /// <summary>
-    /// 現在の設定で光路探索を実行し、結果を <see cref="lastValidPath"/> と <see cref="lastReachable"/> に保存。
+    /// 現在の設定で光路探索を実行し、結果を <see cref="lastValidPath"/> に保存。
     /// </summary>
     public bool FindPath()
     {
         lastValidPath?.Clear();
         bool IsReachable = IsReachableBidirectional(startPoint.position, endPoint.position, maxReflections, out lastValidPath);
+
         return IsReachable;
     }
     
@@ -142,7 +144,7 @@ public class LightPathfinder : MonoBehaviour
         totalNodesGenerated = 2; // source + target
 
         // 深さ0での直通チェック
-        if (IsSegmentClear(source, target, obstacleLayerMask))
+        if (IsSegmentClear(source, target, segmentCheckMask))
         {
             ImageNode nodeZero = new ImageNode { position = source, mirrorSequence = new List<int>() };
             if (ValidateAndBuildPath(source, target, nodeZero, mirrorGeos, out List<Vector2> valid0))
@@ -447,7 +449,7 @@ public class LightPathfinder : MonoBehaviour
         }
         for (int i = 0; i < points.Count - 1; i++)
         {
-            if (!IsSegmentClear(points[i], points[i + 1], obstacleLayerMask | mirrorsLayerMask)) return false;
+            if (!IsSegmentClear(points[i], points[i + 1], segmentCheckMask)) return false;
         }
         builtPath = points;
         return true;
@@ -488,15 +490,9 @@ public class LightPathfinder : MonoBehaviour
             Vector2 b = mirrors[i].EndPoint;
             Vector2 dir = b - a;
             Vector2 n;
-            if (dir.sqrMagnitude < 1e-12f)
-            {
-                n = Vector2.up; // デフォルト
-            }
-            else
-            {
-                dir.Normalize();
-                n = new Vector2(-dir.y, dir.x);
-            }
+
+            dir.Normalize();
+            n = new Vector2(-dir.y, dir.x);
             geos[i] = new MirrorGeo { a = a, b = b, n = n };
         }
         return geos;
