@@ -18,6 +18,9 @@ public class LightPathfinder : MonoBehaviour
     // GC削減用の再利用バッファ
     private readonly List<Vector2> _tmpHitsReverse = new List<Vector2>(32);
     private readonly List<Vector2> _tmpPoints = new List<Vector2>(32);
+    private readonly List<int> _tmpSeqA = new List<int>(16);
+    private readonly List<int> _tmpSeqB = new List<int>(16);
+    private readonly List<int> _tmpCombinedSeq = new List<int>(32);
     private static readonly RaycastHit2D[] _rayBuffer = new RaycastHit2D[1];
 
     private System.Diagnostics.Stopwatch stopwatch;
@@ -134,20 +137,26 @@ public class LightPathfinder : MonoBehaviour
         
         // この探索実行中のみ有効なミラー幾何キャッシュ
         MirrorGeo[] mirrorGeos = BuildMirrorGeometries();
-        // 初期フロンティア
-        List<ImageNode> frontS = new List<ImageNode> { new ImageNode { position = source, mirrorSequence = new List<int>() } };
-        List<ImageNode> frontT = new List<ImageNode> { new ImageNode { position = target, mirrorSequence = new List<int>() } };
+        // ノードプール + 初期フロンティア（インデックス）
+        List<ImageNode> poolS = new List<ImageNode>(64);
+        List<ImageNode> poolT = new List<ImageNode>(64);
+        List<int> frontS = new List<int>(16);
+        List<int> frontT = new List<int>(16);
+        poolS.Add(new ImageNode { position = source, parentIndex = -1, lastMirrorIndex = -1 });
+        frontS.Add(0);
+        poolT.Add(new ImageNode { position = target, parentIndex = -1, lastMirrorIndex = -1 });
+        frontT.Add(0);
 
-        // 再利用バッファ
-        List<ImageNode> nextBuffer = new List<ImageNode>(Mathf.Max(16, mirrors.Count * 2));
+        // 再利用バッファ（フロンティア用インデックス）
+        List<int> nextBuffer = new List<int>(Mathf.Max(16, mirrors.Count * 2));
         HashSet<(int,int,int)> seenBuffer = new HashSet<(int,int,int)>(256);
         totalNodesGenerated = 2; // source + target
 
         // 深さ0での直通チェック
         if (IsSegmentClear(source, target, segmentCheckMask))
         {
-            ImageNode nodeZero = new ImageNode { position = source, mirrorSequence = new List<int>() };
-            if (ValidateAndBuildPath(source, target, nodeZero, mirrorGeos, out List<Vector2> valid0))
+            _tmpCombinedSeq.Clear();
+            if (ValidateAndBuildPath(source, target, source, _tmpCombinedSeq, mirrorGeos, out List<Vector2> valid0))
             {
                 path = valid0;
                 LogDebugResult("直通成功", stopwatch, totalNodesGenerated, connectionChecks);
@@ -161,29 +170,29 @@ public class LightPathfinder : MonoBehaviour
             bool expandSourceFirst = frontS.Count <= frontT.Count;
             if (expandSourceFirst)
             {
-                ExpandOneLayer(frontS, target, mirrorGeos, nextBuffer, seenBuffer);
+                ExpandOneLayer(frontS, target, mirrorGeos, nextBuffer, seenBuffer, poolS);
                 totalNodesGenerated += nextBuffer.Count;
                 // 接続チェック：新規Sと既存/新規T
-                if (TryConnectLayers(nextBuffer, frontT, source, target, out path, ref connectionChecks, mirrorGeos)) 
+                if (TryConnectLayers(nextBuffer, frontT, source, target, out path, ref connectionChecks, mirrorGeos, poolS, poolT)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
                 // バッファをスワップして再利用
-                List<ImageNode> tmpS = frontS;
+                List<int> tmpS = frontS;
                 frontS = nextBuffer;
                 nextBuffer = tmpS;
             }
             else
             {
-                ExpandOneLayer(frontT, source, mirrorGeos, nextBuffer, seenBuffer);
+                ExpandOneLayer(frontT, source, mirrorGeos, nextBuffer, seenBuffer, poolT);
                 totalNodesGenerated += nextBuffer.Count;
-                if (TryConnectLayers(frontS, nextBuffer, source, target, out path, ref connectionChecks, mirrorGeos)) 
+                if (TryConnectLayers(frontS, nextBuffer, source, target, out path, ref connectionChecks, mirrorGeos, poolS, poolT)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                List<ImageNode> tmpT = frontT;
+                List<int> tmpT = frontT;
                 frontT = nextBuffer;
                 nextBuffer = tmpT;
             }
@@ -191,27 +200,27 @@ public class LightPathfinder : MonoBehaviour
             // 反対側も拡張
             if (expandSourceFirst)
             {
-                ExpandOneLayer(frontT, source, mirrorGeos, nextBuffer, seenBuffer);
+                ExpandOneLayer(frontT, source, mirrorGeos, nextBuffer, seenBuffer, poolT);
                 totalNodesGenerated += nextBuffer.Count;
-                if (TryConnectLayers(frontS, nextBuffer, source, target, out path, ref connectionChecks, mirrorGeos)) 
+                if (TryConnectLayers(frontS, nextBuffer, source, target, out path, ref connectionChecks, mirrorGeos, poolS, poolT)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                List<ImageNode> tmpT2 = frontT;
+                List<int> tmpT2 = frontT;
                 frontT = nextBuffer;
                 nextBuffer = tmpT2;
             }
             else
             {
-                ExpandOneLayer(frontS, target, mirrorGeos, nextBuffer, seenBuffer);
+                ExpandOneLayer(frontS, target, mirrorGeos, nextBuffer, seenBuffer, poolS);
                 totalNodesGenerated += nextBuffer.Count;
-                if (TryConnectLayers(nextBuffer, frontT, source, target, out path, ref connectionChecks, mirrorGeos)) 
+                if (TryConnectLayers(nextBuffer, frontT, source, target, out path, ref connectionChecks, mirrorGeos, poolS, poolT)) 
                 {
                     LogDebugResult($"深さ{depth}で成功", stopwatch, totalNodesGenerated, connectionChecks);
                     return true;
                 }
-                List<ImageNode> tmpS2 = frontS;
+                List<int> tmpS2 = frontS;
                 frontS = nextBuffer;
                 nextBuffer = tmpS2;
             }
@@ -229,8 +238,8 @@ public class LightPathfinder : MonoBehaviour
         }
     }
 
-    // 片側のフロンティアを1段だけ展開。facingPoint は法線前面チェックに使用。
-    private void ExpandOneLayer(List<ImageNode> frontier, Vector2 facingPoint, MirrorGeo[] mirrorGeos, List<ImageNode> nextOut, HashSet<(int,int,int)> seen)
+    // 片側のフロンティアを1段だけ展開（インデックスベース）。facingPoint は法線前面チェックに使用。
+    private void ExpandOneLayer(List<int> frontier, Vector2 facingPoint, MirrorGeo[] mirrorGeos, List<int> nextOut, HashSet<(int,int,int)> seen, List<ImageNode> pool)
     {
         nextOut.Clear();
         seen.Clear();
@@ -238,63 +247,64 @@ public class LightPathfinder : MonoBehaviour
         int mirrorCount = mirrors.Count;
         for (int i = 0; i < frontierCount; i++)
         {
+            int parentIdx = frontier[i];
+            ImageNode parent = pool[parentIdx];
             for (int m = 0; m < mirrorCount; m++)
             {
-                if (frontier[i].mirrorSequence.Count > 0 && frontier[i].mirrorSequence[frontier[i].mirrorSequence.Count - 1] == m)
-                    continue;
+                if (parent.lastMirrorIndex == m) continue; // 直近同一鏡の連続反射を抑止
                 MirrorGeo mg = mirrorGeos[m];
-                Vector2 img = ReflectPointAcrossMirror(frontier[i].position, ref mg);
-                List<int> prevSeq = frontier[i].mirrorSequence;
-                List<int> seq = new List<int>(prevSeq.Count + 1);
-                seq.AddRange(prevSeq);
-                seq.Add(m);
-                ImageNode node = new ImageNode { position = img, mirrorSequence = seq };
+                Vector2 img = ReflectPointAcrossMirror(parent.position, ref mg);
                 // 重複削減
                 int xq = Mathf.RoundToInt(img.x * DEDUP_QUANT);
                 int yq = Mathf.RoundToInt(img.y * DEDUP_QUANT);
                 (int,int,int) key = (m, xq, yq);
                 if (seen.Contains(key)) continue;
                 seen.Add(key);
-                nextOut.Add(node);
+                int newIndex = pool.Count;
+                pool.Add(new ImageNode { position = img, parentIndex = parentIdx, lastMirrorIndex = m });
+                nextOut.Add(newIndex);
             }
         }
     }
 
-    // 2つのフロンティア集合の間で接続可能なペアを探し、見つかれば検証してパスを返す
-    private bool TryConnectLayers(List<ImageNode> sideA, List<ImageNode> sideB, Vector2 source, Vector2 target, out List<Vector2> path, ref int connectionChecks, MirrorGeo[] mirrorGeos)
+    // 2つのフロンティア集合の間で接続可能なペアを探し、見つかれば検証してパスを返す（インデックスベース）
+    private bool TryConnectLayers(List<int> sideA, List<int> sideB, Vector2 source, Vector2 target, out List<Vector2> path, ref int connectionChecks, MirrorGeo[] mirrorGeos, List<ImageNode> poolA, List<ImageNode> poolB)
     {
         path = null;
         for (int i = 0; i < sideA.Count; i++)
         {
+            int idxA = sideA[i];
+            ImageNode nodeA = poolA[idxA];
             for (int j = 0; j < sideB.Count; j++)
             {
+                int idxB = sideB[j];
+                ImageNode nodeB = poolB[idxB];
                 connectionChecks++;
-                Vector2 pa = sideA[i].position;
-                Vector2 pb = sideB[j].position;
+                Vector2 pa = nodeA.position;
+                Vector2 pb = nodeB.position;
                 if (!IsSegmentClear(pa, pb, obstacleLayerMask)) continue;
 
-                // 鏡列合成: source側 seqA と target側 seqB を逆順に連結
-                List<int> seqA = sideA[i].mirrorSequence;
-                List<int> seqB = sideB[j].mirrorSequence;
                 // 末尾ミラーが同一なら、直近で同一鏡の連続反射になるため枝刈り
-                if (seqA.Count > 0 && seqB.Count > 0 && seqA[seqA.Count - 1] == seqB[seqB.Count - 1])
-                {
-                    continue;
-                }
-                List<int> combined = new List<int>(seqA.Count + seqB.Count);
-                combined.AddRange(seqA);
-                for (int k = seqB.Count - 1; k >= 0; k--) combined.Add(seqB[k]);
+                if (nodeA.lastMirrorIndex >= 0 && nodeA.lastMirrorIndex == nodeB.lastMirrorIndex) continue;
 
-                // 画像位置も合成: pa（= seqA 適用済み）に対し seqB を逆順で適用
+                // シーケンスを親チェーンから遅延構築
+                ReconstructSequence(poolA, idxA, _tmpSeqA); // root->A 順
+                ReconstructSequence(poolB, idxB, _tmpSeqB); // root->B 順
+
+                // 画像位置合成: pa に対し seqB を逆順で適用
                 Vector2 combinedImage = pa;
-                for (int k = seqB.Count - 1; k >= 0; k--)
+                for (int k = _tmpSeqB.Count - 1; k >= 0; k--)
                 {
-                    MirrorGeo mg = mirrorGeos[seqB[k]];
+                    MirrorGeo mg = mirrorGeos[_tmpSeqB[k]];
                     combinedImage = ReflectPointAcrossMirror(combinedImage, ref mg);
                 }
 
-                ImageNode nodeCombined = new ImageNode { position = combinedImage, mirrorSequence = combined };
-                if (ValidateAndBuildPath(source, target, nodeCombined, mirrorGeos, out List<Vector2> candidate))
+                // 連結シーケンス: seqA + reverse(seqB)
+                _tmpCombinedSeq.Clear();
+                _tmpCombinedSeq.AddRange(_tmpSeqA);
+                for (int k = _tmpSeqB.Count - 1; k >= 0; k--) _tmpCombinedSeq.Add(_tmpSeqB[k]);
+
+                if (ValidateAndBuildPath(source, target, combinedImage, _tmpCombinedSeq, mirrorGeos, out List<Vector2> candidate))
                 {
                     path = candidate;
                     return true;
@@ -314,11 +324,12 @@ public class LightPathfinder : MonoBehaviour
         public Vector2 n; // 法線（正規化済み）
     }
 
-    // 像のノード
+    // 像のノード（親インデックス方式）
     private struct ImageNode
     {
         public Vector2 position;
-        public List<int> mirrorSequence;
+        public int parentIndex;       // 親ノードのインデックス（rootは-1）
+        public int lastMirrorIndex;   // 親→自ノードの間で使われた鏡インデックス（rootは-1）
     }
 
     private static Vector2 ClosestPointOnLine(Vector2 a, Vector2 b, Vector2 p)
@@ -425,10 +436,10 @@ public class LightPathfinder : MonoBehaviour
     /// ターゲットから仮想光源へ向かう直線を、像生成の鏡列を逆順にたどって交点を求め、
     /// 各交点が線分上であること・反射則が成り立つこと・障害物に遮られないことを検証します。
     /// </summary>
-    private bool ValidateAndBuildPath(Vector2 source, Vector2 target, ImageNode image, MirrorGeo[] mirrorGeos, out List<Vector2> builtPath)
+    private bool ValidateAndBuildPath(Vector2 source, Vector2 target, Vector2 virtualEndpoint, List<int> sequence, MirrorGeo[] mirrorGeos, out List<Vector2> builtPath)
     {
         builtPath = null;
-        List<Vector2> points = BuildFullPathPoints(source, target, image, mirrorGeos);
+        List<Vector2> points = BuildFullPathPoints(source, target, virtualEndpoint, sequence, mirrorGeos);
         if (points == null || points.Count < 2) return false;
 
         for (int i = 1; i < points.Count - 1; i++)
@@ -437,8 +448,8 @@ public class LightPathfinder : MonoBehaviour
             Vector2 cur = points[i];
             Vector2 next = points[i + 1];
             int mirrorIndex = i - 1;
-            if (mirrorIndex < 0 || mirrorIndex >= image.mirrorSequence.Count) return false;
-            MirrorGeo mg = mirrorGeos[image.mirrorSequence[mirrorIndex]];
+            if (mirrorIndex < 0 || mirrorIndex >= sequence.Count) return false;
+            MirrorGeo mg = mirrorGeos[sequence[mirrorIndex]];
             Vector2 inc = (cur - prev).normalized;
             Vector2 n = mg.n;
             // 前面反射のみ許可
@@ -455,10 +466,8 @@ public class LightPathfinder : MonoBehaviour
         return true;
     }
 
-    private List<Vector2> BuildFullPathPoints(Vector2 source, Vector2 target, ImageNode image, MirrorGeo[] mirrorGeos)
+    private List<Vector2> BuildFullPathPoints(Vector2 source, Vector2 target, Vector2 virtualEndpoint, List<int> seq, MirrorGeo[] mirrorGeos)
     {
-        List<int> seq = image.mirrorSequence;
-        Vector2 virtualEndpoint = image.position;
         Vector2 lineFrom = target;
         Vector2 lineTo = virtualEndpoint;
         _tmpHitsReverse.Clear();
@@ -477,6 +486,20 @@ public class LightPathfinder : MonoBehaviour
         for (int i = _tmpHitsReverse.Count - 1; i >= 0; i--) _tmpPoints.Add(_tmpHitsReverse[i]);
         _tmpPoints.Add(target);
         return new List<Vector2>(_tmpPoints);
+    }
+
+    // 親チェーンからシーケンス(root->node)を復元
+    private void ReconstructSequence(List<ImageNode> pool, int nodeIndex, List<int> outSeq)
+    {
+        outSeq.Clear();
+        int cur = nodeIndex;
+        while (cur >= 0)
+        {
+            ImageNode n = pool[cur];
+            if (n.lastMirrorIndex >= 0) outSeq.Add(n.lastMirrorIndex);
+            cur = n.parentIndex;
+        }
+        outSeq.Reverse();
     }
 
     // ミラー幾何を1回だけ構築
