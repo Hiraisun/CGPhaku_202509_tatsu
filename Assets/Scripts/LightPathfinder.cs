@@ -265,9 +265,9 @@ public class LightPathfinder : MonoBehaviour
                 ImageNode nodeB = poolB[idxB];
                 connectionChecks++;
 
-                Vector2 pa = nodeA.position;
-                Vector2 pb = nodeB.position;
-                if (!IsSegmentClear(pa, pb, obstacleLayerMask)) continue;
+                // Vector2 pa = nodeA.position;
+                // Vector2 pb = nodeB.position;
+                // if (!IsSegmentClear(pa, pb, obstacleLayerMask)) continue;
 
                 // 末尾ミラーが同一なら、直近で同一鏡の連続反射になるため枝刈り
                 if (nodeA.lastMirrorIndex >= 0 && nodeA.lastMirrorIndex == nodeB.lastMirrorIndex) continue;
@@ -277,7 +277,7 @@ public class LightPathfinder : MonoBehaviour
                 ReconstructSequence(poolB, idxB, _tmpSeqB); // root->B 順
 
                 // 画像位置合成: pa に対し seqB を逆順で適用
-                Vector2 combinedImage = pa;
+                Vector2 combinedImage = nodeA.position;
                 for (int k = _tmpSeqB.Count - 1; k >= 0; k--)
                 {
                     MirrorGeo mg = mirrorGeos[_tmpSeqB[k]];
@@ -359,7 +359,7 @@ public class LightPathfinder : MonoBehaviour
     }
 
     /// <summary>
-    /// 半直線と線分の交差判定
+    /// 線分と線分の交差判定
     /// </summary>
     private static bool LineLineIntersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, out Vector2 intersection)
     {
@@ -374,7 +374,7 @@ public class LightPathfinder : MonoBehaviour
         float u = (qp.x * r.y - qp.y * r.x) / rxs;
 
         // 線分チェック
-        if (t >= 0 && u >= 0 && u <= 1){
+        if (t >= 0 && t <= 1 && u >= 0 && u <= 1){
             intersection = p1 + t * r;
             return true;
         }

@@ -842,7 +842,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LightPathfinder
   startPoint: {fileID: 1055287945}
   endPoint: {fileID: 595666920}
-  maxReflections: 3
+  maxReflections: 4
   obstacleLayerMask:
     serializedVersion: 2
     m_Bits: 128
