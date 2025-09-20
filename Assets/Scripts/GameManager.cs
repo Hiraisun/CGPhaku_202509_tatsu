@@ -55,7 +55,7 @@ public class GameManager : MonoBehaviour
         // RandomGameSceneが読み込まれた場合のみ初期化を実行
         if (scene.name == "RandomGameScene")
         {
-            InitializeGame();
+            InitializeBaseGame();
         }
     }
     
@@ -66,7 +66,7 @@ public class GameManager : MonoBehaviour
     #endregion
     
     #region Game Initialization
-    private void InitializeGame()
+    private void InitializeBaseGame()
     {
         // システム参照の取得
         pathfinder = FindFirstObjectByType<LightPathfinder>();
@@ -77,9 +77,9 @@ public class GameManager : MonoBehaviour
         // イベントの購読
         mirrorPlacer.OnMirrorPlaced += OnMirrorPlacedInternal;
 
-        randomStageGenerate.GenerateStage(5);
-
-
+        do{
+            randomStageGenerate.GenerateStage(1);
+        }while (!pathfinder.IsDirectlyReachable(pathfinder.startPoint.position, pathfinder.endPoint.position));
         
         Debug.Log("GameManager: InGame initialized");
     }

@@ -43,17 +43,6 @@ public class LightPathfinder : MonoBehaviour
     public List<Vector2> lastValidPath = new();
 
     #region Lifecycle / Entry
-
-    void Awake()
-    {
-
-    }
-
-    void Start()
-    {
-        FindPath();
-    }
-
     void OnEnable()
     {
         // ゲーム中にMirror2Dが生成された場合の検出
@@ -76,6 +65,20 @@ public class LightPathfinder : MonoBehaviour
         bool IsReachable = IsReachableBidirectional(startPoint.position, endPoint.position, maxReflections, lastValidPath);
 
         return IsReachable;
+    }
+
+    /// <summary>
+    /// 直接到達可能かを判定。
+    /// </summary>
+    public bool IsDirectlyReachable(Vector2 source, Vector2 target)
+    {
+        if (IsSegmentClear(source, target, segmentCheckMask))
+        {
+            
+            Debug.Log("直通成功");
+            return true;
+        }
+        return false;
     }
     
     /// <summary>
@@ -153,15 +156,7 @@ public class LightPathfinder : MonoBehaviour
         totalNodesGenerated = 2; // source + target
 
         // 深さ0での直通チェック
-        if (IsSegmentClear(source, target, segmentCheckMask))
-        {
-            _tmpCombinedSeq.Clear();
-            if (ValidateAndBuildPath(source, target, source, _tmpCombinedSeq, mirrorGeos, pathOut))
-            {
-                LogDebugResult("直通成功", stopwatch, totalNodesGenerated, connectionChecks);
-                return true;
-            }
-        }
+        IsDirectlyReachable(source, target);
         
 
         for (int depth = 1; depth <= maxDepth; depth++)
