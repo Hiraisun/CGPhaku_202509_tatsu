@@ -7,11 +7,31 @@ public class RandomStageGenerate : MonoBehaviour
     [SerializeField] private Vector2 stageSize = new(10, 10);
     [SerializeField] private List<Vector3> safeAreas = new(); // x, y, radius
 
-    [Header("Parameter")]
+    [Header("Test Parameter")]
     [SerializeField] private int asteroidCount = 10;
     [SerializeField] private Vector2 asteroidSizeRange = new(1, 2);
     private List<GameObject> asteroids = new List<GameObject>();
 
+
+    // 難易度ごとのパラメータ辞書
+    private static readonly Dictionary<int, (int asteroidCount, Vector2 asteroidSizeRange)> difficultyParams = new()
+    {
+        { 1, (15, new Vector2(1, 3)) },
+        { 2, (38, new Vector2(1, 3)) },
+        { 3, (42, new Vector2(0.5f, 2)) },
+        { 4, (46, new Vector2(0.5f, 2)) },
+        { 5, (50, new Vector2(0.5f, 2)) }
+    };
+
+    public void GenerateStage(int difficulty)
+    {
+        ClearStage();
+
+        (int asteroidCount, Vector2 asteroidSizeRange) = difficultyParams[difficulty];
+        this.asteroidCount = asteroidCount;
+        this.asteroidSizeRange = asteroidSizeRange;
+        GenerateStage2();
+    }
 
     // 案1: 完全ランダム
     public void GenerateStage1()
@@ -33,7 +53,7 @@ public class RandomStageGenerate : MonoBehaviour
         }
     }
 
-    // 案2: 位置ランダム、サイズはパーリンノイズ
+    // 案2: 位置ランダム、サイズはパーリンノイズ -> 採用
     public void GenerateStage2()
     {
         for (int i = 0; i < asteroidCount; i++)
@@ -59,6 +79,7 @@ public class RandomStageGenerate : MonoBehaviour
         {
             Destroy(asteroid);
         }
+        asteroids.Clear();
     }
 
     private bool IsSafeArea(Vector2 pos)

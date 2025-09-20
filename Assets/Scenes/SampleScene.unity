@@ -1029,8 +1029,8 @@ MonoBehaviour:
   safeAreas:
   - {x: -6.98, y: -3.81, z: 3}
   - {x: 7.77, y: 4.16, z: 3}
-  asteroidCount: 30
-  asteroidSizeRange: {x: 1, y: 2}
+  asteroidCount: 50
+  asteroidSizeRange: {x: 0.5, y: 2}
 --- !u!1 &1974835758
 GameObject:
   m_ObjectHideFlags: 0
