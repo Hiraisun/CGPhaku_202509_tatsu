@@ -70,12 +70,18 @@ public class LightPathfinder : MonoBehaviour
     /// <summary>
     /// 直接到達可能かを判定。
     /// </summary>
-    public bool IsDirectlyReachable(Vector2 source, Vector2 target)
+    public bool IsDirectlyReachable()
     {
+        Vector2 source = startPoint.position;
+        Vector2 target = endPoint.position;
+
         if (IsSegmentClear(source, target, segmentCheckMask))
         {
-            
-            Debug.Log("直通成功");
+            // 直通した場合、パスを構築して true を返す
+            lastValidPath.Clear();
+            lastValidPath.Add(source);
+            lastValidPath.Add(target);
+            Debug.Log("LightPathfinder: 直通した");
             return true;
         }
         return false;
@@ -156,7 +162,11 @@ public class LightPathfinder : MonoBehaviour
         totalNodesGenerated = 2; // source + target
 
         // 深さ0での直通チェック
-        IsDirectlyReachable(source, target);
+        if (IsDirectlyReachable())
+        {
+            LogDebugResult("深さ0で成功", stopwatch, totalNodesGenerated, connectionChecks);
+            return true;
+        }
         
 
         for (int depth = 1; depth <= maxDepth; depth++)

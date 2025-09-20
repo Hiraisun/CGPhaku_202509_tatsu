@@ -8,7 +8,7 @@ public class TestLasar : MonoBehaviour
     [SerializeField] private LightPathfinder pathfinder;
 
     [Header("Debug")]
-    [SerializeField] private bool enableDebug = false;
+    public bool enableDebug = false;
 
     private LayerMask obstacleLayerMask;
     private LayerMask mirrorsLayerMask;

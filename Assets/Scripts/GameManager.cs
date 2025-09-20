@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     public ClearLaserProjector clearLaserProjector;
     public RandomStageGenerate randomStageGenerate;
     public UIManager uiManager;
+    public TestLasar testLasar;
     #endregion
     
     #region Events
@@ -75,7 +76,7 @@ public class GameManager : MonoBehaviour
         clearLaserProjector = FindFirstObjectByType<ClearLaserProjector>();
         randomStageGenerate = FindFirstObjectByType<RandomStageGenerate>();
         uiManager = FindFirstObjectByType<UIManager>();
-        
+        testLasar = FindFirstObjectByType<TestLasar>();
         // イベントの購読
         mirrorPlacer.OnMirrorPlaced += OnMirrorPlacedInternal;
 
@@ -83,9 +84,7 @@ public class GameManager : MonoBehaviour
         mirrorPlacer.Initialize();
 
         // ステージ生成
-        do{
-            randomStageGenerate.GenerateStage(1);
-        }while (!pathfinder.IsDirectlyReachable(pathfinder.startPoint.position, pathfinder.endPoint.position));
+        randomStageGenerate.GenerateStage(3);
         
         Debug.Log("GameManager: InGame initialized");
     }
@@ -138,6 +137,7 @@ public class GameManager : MonoBehaviour
             ChangeState(GameState.Success);
 
             mirrorPlacer.DisablePlacement();
+            testLasar.enableDebug = true;
         }
 
         // 敗北条件
@@ -145,6 +145,7 @@ public class GameManager : MonoBehaviour
         {
             ChangeState(GameState.Defeat);
             mirrorPlacer.DisablePlacement();
+            testLasar.enableDebug = true;
         }
     }
     #endregion

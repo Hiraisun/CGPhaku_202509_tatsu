@@ -77,9 +77,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: -282004731
+  m_SortingLayer: 2
+  m_SortingOrder: 1
   m_Sprite: {fileID: -2265253375828488958, guid: 6ae3e4b3ba7e9424a93d02289c434f40, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -104,5 +104,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DropShadow
   parentRenderer: {fileID: 6935426989283981296}
-  shadowOffset: {x: -0.02, y: -0.1, z: 0}
   shadowMaterial: {fileID: 2100000, guid: b30b768d4974b0f459207d9e1b4f9082, type: 2}

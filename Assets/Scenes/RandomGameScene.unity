@@ -641,7 +641,7 @@ LineRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 1, g: 1, b: 1, a: 1}
+      key0: {r: 1, g: 0, b: 0, a: 1}
       key1: {r: 1, g: 1, b: 1, a: 1}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
@@ -666,7 +666,7 @@ LineRenderer:
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     numCornerVertices: 0
@@ -695,7 +695,7 @@ MonoBehaviour:
   lineRenderer: {fileID: 690232594}
   startPoint: {fileID: 1055287945}
   pathfinder: {fileID: 1867982663}
-  enableDebug: 1
+  enableDebug: 0
 --- !u!4 &690232596
 Transform:
   m_ObjectHideFlags: 0
@@ -1082,6 +1082,7 @@ MonoBehaviour:
   clearLaserProjector: {fileID: 1867982664}
   randomStageGenerate: {fileID: 0}
   uiManager: {fileID: 0}
+  testLasar: {fileID: 0}
 --- !u!1 &1867982659
 GameObject:
   m_ObjectHideFlags: 0
