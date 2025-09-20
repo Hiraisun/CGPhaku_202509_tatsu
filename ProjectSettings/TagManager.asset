@@ -14,7 +14,7 @@ TagManager:
   - 
   - obstacles
   - mirrors
-  - 
+  - directLineCollider
   - 
   - 
   - 
