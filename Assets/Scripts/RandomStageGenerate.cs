@@ -17,10 +17,10 @@ public class RandomStageGenerate : MonoBehaviour
     private static readonly Dictionary<int, (int asteroidCount, Vector2 asteroidSizeRange)> difficultyParams = new()
     {
         { 1, (15, new Vector2(1, 3)) },
-        { 2, (38, new Vector2(1, 3)) },
-        { 3, (42, new Vector2(0.5f, 2)) },
-        { 4, (46, new Vector2(0.5f, 2)) },
-        { 5, (50, new Vector2(0.5f, 2)) }
+        { 2, (20, new Vector2(1, 3)) },
+        { 3, (30, new Vector2(0.5f, 2)) },
+        { 4, (35, new Vector2(0.5f, 2)) },
+        { 5, (40, new Vector2(0.5f, 2)) }
     };
 
     public void GenerateStage(int difficulty)

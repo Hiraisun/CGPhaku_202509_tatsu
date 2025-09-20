@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
     
     #region Game State
     public enum GameState { Playing, Success, Defeat, Menu }
-    public GameState CurrentState { get; private set; } = GameState.Playing;
+    public GameState CurrentState { get; private set; } = GameState.Menu;
 
     #endregion
     
@@ -23,8 +23,8 @@ public class GameManager : MonoBehaviour
     [Header("System References")]
     public LightPathfinder pathfinder;
     public MirrorPlacer mirrorPlacer;
-    public IInput inputProvider;
     public ClearLaserProjector clearLaserProjector;
+    public RandomStageGenerate randomStageGenerate;
     #endregion
     
     #region Events
@@ -45,16 +45,23 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-    }
-    
-    void Start()
-    {
-        InitializeGame();
-    }
-    
-    void Update()
-    {
 
+        // シーン読み込み完了イベントの購読
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+    
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        // RandomGameSceneが読み込まれた場合のみ初期化を実行
+        if (scene.name == "RandomGameScene")
+        {
+            InitializeGame();
+        }
+    }
+    
+    public void OnStartButtonClicked()
+    {
+        ChangeState(GameState.Playing);
     }
     #endregion
     
@@ -62,22 +69,19 @@ public class GameManager : MonoBehaviour
     private void InitializeGame()
     {
         // システム参照の取得
-        if (pathfinder == null)
-            pathfinder = FindFirstObjectByType<LightPathfinder>();
-        
-        if (mirrorPlacer == null)
-            mirrorPlacer = FindFirstObjectByType<MirrorPlacer>();
-        
-        // 入力プロバイダーの取得
-        inputProvider = FindFirstObjectByType<InputPC>();
-        
-        // 初期状態の設定
-        
+        pathfinder = FindFirstObjectByType<LightPathfinder>();
+        mirrorPlacer = FindFirstObjectByType<MirrorPlacer>();
+        clearLaserProjector = FindFirstObjectByType<ClearLaserProjector>();
+        randomStageGenerate = FindFirstObjectByType<RandomStageGenerate>();
         
         // イベントの購読
         mirrorPlacer.OnMirrorPlaced += OnMirrorPlacedInternal;
+
+        randomStageGenerate.GenerateStage(5);
+
+
         
-        Debug.Log("GameManager initialized");
+        Debug.Log("GameManager: InGame initialized");
     }
     #endregion
     
@@ -100,17 +104,18 @@ public class GameManager : MonoBehaviour
                 break;
             case GameState.Defeat:
                 break;
+            case GameState.Menu:
+                break;
         }
     }
     
     private void StartGame()
     {
-        // ゲーム開始時の処理
+        UnityEngine.SceneManagement.SceneManager.LoadScene("RandomGameScene");
     }
     #endregion
     
     #region Game Logic
-    
     private void OnMirrorPlacedInternal()
     {
         
@@ -123,27 +128,6 @@ public class GameManager : MonoBehaviour
             clearLaserProjector.ProjectLaser(pathfinder.lastValidPath);
             ChangeState(GameState.Success);
         }
-    }
-    #endregion
-    
-    #region Public Methods
-    public void StartNewGame()
-    {
-        ChangeState(GameState.Playing);
-    }
-    #endregion
-    
-    #region Debug
-    [ContextMenu("Force Victory")]
-    private void ForceVictory()
-    {
-        ChangeState(GameState.Success);
-    }
-    
-    [ContextMenu("Force Defeat")]
-    private void ForceDefeat()
-    {
-        ChangeState(GameState.Defeat);
     }
     #endregion
 }

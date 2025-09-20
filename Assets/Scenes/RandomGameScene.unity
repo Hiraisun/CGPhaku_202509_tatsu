@@ -525,7 +525,7 @@ MonoBehaviour:
   lineRenderer: {fileID: 690232594}
   startPoint: {fileID: 1055287945}
   pathfinder: {fileID: 1867982663}
-  enableDebug: 1
+  enableDebug: 0
 --- !u!4 &690232596
 Transform:
   m_ObjectHideFlags: 0
@@ -904,6 +904,7 @@ MonoBehaviour:
   pathfinder: {fileID: 1867982663}
   mirrorPlacer: {fileID: 1867982662}
   clearLaserProjector: {fileID: 1867982664}
+  randomStageGenerate: {fileID: 0}
 --- !u!1 &1867982659
 GameObject:
   m_ObjectHideFlags: 0
