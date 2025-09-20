@@ -88,8 +88,17 @@ public class GameManager : MonoBehaviour
         soundPlayer.Initialize();
 
         // ステージ生成
+        // for (int i = 0; i < 10; i++)
+        // {
+        //     randomStageGenerate.GenerateStage(3);
+        // 
+        //     if (!pathfinder.IsDirectlyReachable()){
+        //         Debug.Log("GameManager: 直接到達不可能 生成成功");
+        //         break;
+        //     }
+        // }
         randomStageGenerate.GenerateStage(3);
-        
+
         Debug.Log("GameManager: InGame initialized");
     }
     #endregion
