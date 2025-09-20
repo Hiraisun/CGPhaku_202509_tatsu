@@ -47,7 +47,7 @@ Material:
     - _QueueOffset: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _HologramColor: {r: 0.28627455, g: 0.68236667, b: 1, a: 1}
+    - _HologramColor: {r: 0.43867922, g: 0.7420958, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &2522759453230669554
