@@ -79,6 +79,7 @@ public class GameManager : MonoBehaviour
         testLasar = FindFirstObjectByType<TestLasar>();
         // イベントの購読
         mirrorPlacer.OnMirrorPlaced += OnMirrorPlacedInternal;
+        uiManager.OnRetryRequested += OnRetryRequestedInternal;
 
         // 初期化
         mirrorPlacer.Initialize();
@@ -138,6 +139,7 @@ public class GameManager : MonoBehaviour
 
             mirrorPlacer.DisablePlacement();
             testLasar.enableDebug = true;
+            uiManager.ShowSuccessPanel();
         }
 
         // 敗北条件
@@ -146,7 +148,13 @@ public class GameManager : MonoBehaviour
             ChangeState(GameState.Defeat);
             mirrorPlacer.DisablePlacement();
             testLasar.enableDebug = true;
+            uiManager.ShowFailedPanel();
         }
+    }
+
+    private void OnRetryRequestedInternal()
+    {
+        ChangeState(GameState.Playing);
     }
     #endregion
 }
