@@ -4,7 +4,7 @@
 # 使用アセット
 (.gitignoreしています)
 - TextMeshPro
-
+- Blue Sci-fi GUI Kit + 250 icons!
 
 
 
