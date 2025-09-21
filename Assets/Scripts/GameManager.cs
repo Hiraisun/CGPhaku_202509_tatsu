@@ -89,6 +89,8 @@ public class GameManager : MonoBehaviour
         // 初期化
         mirrorPlacer.Initialize();
         soundPlayer.Initialize();
+        uiManager.UpdateDifficultyText(currentDifficulty);
+        uiManager.UpdateMirrorCountText(5);
 
         randomStageGenerate.GenerateStage(currentDifficulty);
 
