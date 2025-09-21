@@ -620,7 +620,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'v0.1.1
+  m_text: 'v0.1.2
 
 '
   m_isRightToLeft: 0
@@ -1112,6 +1112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ff8fa014ed033843ab90435cea6f8fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  currentDifficulty: 1
   maxMirrors: 5
   pathfinder: {fileID: 0}
   mirrorPlacer: {fileID: 0}
@@ -1119,6 +1120,7 @@ MonoBehaviour:
   randomStageGenerate: {fileID: 0}
   uiManager: {fileID: 0}
   testLasar: {fileID: 0}
+  soundPlayer: {fileID: 0}
 --- !u!1 &2021335605
 GameObject:
   m_ObjectHideFlags: 0
