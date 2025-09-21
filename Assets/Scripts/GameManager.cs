@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     #region Game State
     public enum GameState { Playing, Success, Defeat, Menu }
     public GameState CurrentState { get; private set; } = GameState.Menu;
+    public int currentDifficulty = 1;
 
     #endregion
     
@@ -64,7 +65,9 @@ public class GameManager : MonoBehaviour
     
     public void OnStartButtonClicked()
     {
+        currentDifficulty = 1;
         ChangeState(GameState.Playing);
+        StartGame();
     }
     #endregion
     
@@ -87,17 +90,7 @@ public class GameManager : MonoBehaviour
         mirrorPlacer.Initialize();
         soundPlayer.Initialize();
 
-        // ステージ生成
-        // for (int i = 0; i < 10; i++)
-        // {
-        //     randomStageGenerate.GenerateStage(3);
-        // 
-        //     if (!pathfinder.IsDirectlyReachable()){
-        //         Debug.Log("GameManager: 直接到達不可能 生成成功");
-        //         break;
-        //     }
-        // }
-        randomStageGenerate.GenerateStage(3);
+        randomStageGenerate.GenerateStage(currentDifficulty);
 
         Debug.Log("GameManager: InGame initialized");
     }
@@ -113,18 +106,6 @@ public class GameManager : MonoBehaviour
         CurrentState = newState;
         OnStateChanged?.Invoke(newState);
         
-        switch (newState)
-        {
-            case GameState.Playing:
-                StartGame();
-                break;
-            case GameState.Success:
-                break;
-            case GameState.Defeat:
-                break;
-            case GameState.Menu:
-                break;
-        }
     }
     
     private void StartGame()
@@ -162,9 +143,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // リトライ
     private void OnRetryRequestedInternal()
     {
+        if (CurrentState == GameState.Success){
+            if (currentDifficulty < 5) currentDifficulty++; //難易度上昇
+        }else if (CurrentState == GameState.Defeat){
+            if (currentDifficulty > 1) currentDifficulty--; //難易度下降
+        }
+
         ChangeState(GameState.Playing);
+        StartGame();
     }
     #endregion
 }
