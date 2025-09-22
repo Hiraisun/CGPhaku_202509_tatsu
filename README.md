@@ -71,7 +71,9 @@
 (.gitignoreしています)
 - TextMeshPro
 - Blue Sci-fi GUI Kit + 250 icons!
-- 一部素材に生成AIを利用しています。
+- Free Icon Pack for Unity & Unreal – 1500+ Input Icons for Game UI (https://juliocacko.itch.io/free-input-prompts)  
+  
+- その他、一部素材に生成AIを利用しています。
 
 # 使用フォント
 - マキナス4 (タイトルロゴ)
