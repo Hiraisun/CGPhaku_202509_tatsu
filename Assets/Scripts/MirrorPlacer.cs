@@ -2,6 +2,16 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
+/// 鏡配置状態の列挙型
+/// </summary>
+public enum PlacementState
+{
+    Disabled,       // 操作無効,演出中など
+    Idle,           // 操作有効,待機中
+    MirrorPlacing,  // 鏡配置中 (新規配置 or 方向変更)
+}
+
+/// <summary>
 /// 鏡配置システム - プラットフォーム非依存
 /// </summary>
 public class MirrorPlacer : MonoBehaviour
@@ -9,6 +19,7 @@ public class MirrorPlacer : MonoBehaviour
     [Header("Configuration")]
     [SerializeField] private GameObject mirrorPrefab;
     [SerializeField] private GameObject mirrorPreviewPrefab;
+    [SerializeField] private InputPromptsUI inputPromptsUI;
     
     // イベント
     public event System.Action OnPositionSet;
@@ -21,13 +32,6 @@ public class MirrorPlacer : MonoBehaviour
     private List<GameObject> placedMirrors = new List<GameObject>();
     
     // 配置状態管理
-    private enum PlacementState
-    {
-        Disabled,       // 操作無効,演出中など
-        Idle,           // 操作有効,待機中
-        MirrorPlacing,    // 鏡配置中 (新規配置 or 方向変更)
-
-    }
     
     private PlacementState currentState;
     private Vector2 placementPosition; // 設置中の位置（ワールド座標）
@@ -45,11 +49,13 @@ public class MirrorPlacer : MonoBehaviour
         previewMirrorObject = Instantiate(mirrorPreviewPrefab, new Vector3(100, 100, 0), Quaternion.identity);
 
         currentState = PlacementState.Idle;
+        inputPromptsUI.SetInputPrompts(currentState);
     }
 
     public void DisablePlacement()
     {
         currentState = PlacementState.Disabled;
+        inputPromptsUI.SetInputPrompts(currentState);
     }
     
     void Update()
@@ -60,6 +66,7 @@ public class MirrorPlacer : MonoBehaviour
             if (currentState == PlacementState.Idle)
             {
                 currentState = PlacementState.MirrorPlacing;
+                inputPromptsUI.SetInputPrompts(currentState);
                 // 位置決定
                 placementPosition = position;
                 previewMirrorObject.transform.position = position;
@@ -68,6 +75,7 @@ public class MirrorPlacer : MonoBehaviour
             else if (currentState == PlacementState.MirrorPlacing){ // 配置確定----------------
                 // 状態をリセット
                 currentState = PlacementState.Idle;
+                inputPromptsUI.SetInputPrompts(currentState);
                 // 実際の鏡を作成
                 PlaceMirror(placementPosition, position);
                 OnMirrorPlaced?.Invoke();
@@ -77,11 +85,13 @@ public class MirrorPlacer : MonoBehaviour
             if (currentState == PlacementState.MirrorPlacing)
             {
                 currentState = PlacementState.Idle;
+                inputPromptsUI.SetInputPrompts(currentState);
                 previewMirrorObject.transform.position = new Vector3(100, 100, 0);
                 OnPlacementCancelled?.Invoke();
             }
         }
 
+        // ホログラムミラー追従
         if (currentState == PlacementState.MirrorPlacing){
             Vector2 position = mainCamera.ScreenToWorldPoint(Input.mousePosition);
             Quaternion rotation = CalculateMirrorRotation(placementPosition, position);
