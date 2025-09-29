@@ -75,7 +75,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 
-# AssetStore
-/Assets/proTools/
-/Assets/Vendor/
-/Assets/FullOpaqueSpell/
+# Asset Store files
+/[Aa]ssets/*
+!/[Aa]ssets/_Project/

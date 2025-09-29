@@ -67,13 +67,13 @@
 - オブジェクトの影
 などなど。\\\ShaderGraph完全に理解した//
 
-# 使用アセット
-(.gitignoreしています)
-- TextMeshPro
-- Blue Sci-fi GUI Kit + 250 icons!
+# 使用アセット (.gitignore)
+### Asset Store
+- Blue Sci-fi GUI Kit + 250 icons! (https://assetstore.unity.com/packages/2d/gui/blue-sci-fi-gui-kit-250-icons-297446)
+### 外部
 - Free Icon Pack for Unity & Unreal – 1500+ Input Icons for Game UI (https://juliocacko.itch.io/free-input-prompts)  
-  
-- その他、一部素材に生成AIを利用しています。
+  - Assets/Free Icon Pack for Unity & Unreal – 1500+ Input Icons for Game UI/Keyboard_Mouse etc...
+- その他、一部画像素材に生成AIを利用
 
 # 使用フォント
 - マキナス4 (タイトルロゴ)
