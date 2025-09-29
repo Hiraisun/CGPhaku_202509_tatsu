@@ -659,7 +659,7 @@ PrefabInstance:
     - target: {fileID: 6010428158595803485, guid: 619725d3cf46bc2488f216959fba39bf, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -6065066992076385213, guid: 8702b7169900dea4f8d20287fd7bb507, type: 3}
+      objectReference: {fileID: -6065066992076385213, guid: d3fc30a399c24ec42887e7f588b6262f, type: 3}
     - target: {fileID: 6145146807429040892, guid: 619725d3cf46bc2488f216959fba39bf, type: 3}
       propertyPath: m_Name
       value: Prompt_Left
@@ -934,6 +934,10 @@ PrefabInstance:
       propertyPath: m_text
       value: "\u30AD\u30E3\u30F3\u30BB\u30EB"
       objectReference: {fileID: 0}
+    - target: {fileID: 6010428158595803485, guid: 619725d3cf46bc2488f216959fba39bf, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -129803480319823579, guid: c70c8e8c6aac8524b84ae11c3c95555e, type: 3}
     - target: {fileID: 6145146807429040892, guid: 619725d3cf46bc2488f216959fba39bf, type: 3}
       propertyPath: m_Name
       value: Prompt_right
@@ -1601,7 +1605,7 @@ PrefabInstance:
     - target: {fileID: 6010428158595803485, guid: 619725d3cf46bc2488f216959fba39bf, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 7315383655776651106, guid: 021af5aaa5cbdc847882a922585526f2, type: 3}
+      objectReference: {fileID: 7315383655776651106, guid: d6f7543d4531f3c4594bfe4475d79f6d, type: 3}
     - target: {fileID: 6145146807429040892, guid: 619725d3cf46bc2488f216959fba39bf, type: 3}
       propertyPath: m_Name
       value: Prompt_middle
@@ -1865,7 +1869,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1237.648, y: 73.299}
+  m_SizeDelta: {x: 1148.922, y: 69.692}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &1349978067
 MonoBehaviour:
