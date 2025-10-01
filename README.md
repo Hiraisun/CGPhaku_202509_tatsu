@@ -1,5 +1,6 @@
-![ロゴイメージ](./images/01_ロゴイメージ.png)
-![ゲーム画面イメージ](./images/01_ゲーム画面イメージ.png)
+
+![ロゴイメージ](https://github.com/Hiraisun/CGPhaku_202509_tatsu/blob/main/images/01_titleLogo.png)
+![ゲーム画面イメージ](https://github.com/Hiraisun/CGPhaku_202509_tatsu/blob/main/images/01_ingame.png)
 
 
 
@@ -22,7 +23,7 @@
 
 
 # あそびかた
-<img src="./images/02_画面説明.png" width="48%">  <img src="./images/02_クリアイメージ.png" width="48%">
+<img src="https://github.com/Hiraisun/CGPhaku_202509_tatsu/blob/main/images/02_tutorial.png" width="48%">  <img src="https://github.com/Hiraisun/CGPhaku_202509_tatsu/blob/main/images/02_gameClear.png" width="48%">
 
 ### 操作方法
 - マウス左クリック　　　: 鏡の設置位置を決定
@@ -43,7 +44,7 @@
 ## 光線到達パスの探査アルゴリズム
 地点A->Bへ、鏡の反射を繰り返して到達する任意のパスを探査する。  
 制作期間の6割をこれに費やした。
-[ソースコード](./Assets/Scripts/LightPathfinder.cs)
+[ソースコード](https://github.com/Hiraisun/CGPhaku_202509_tatsu/blob/main/Assets/Scripts/LightPathfinder.cs)
 
 1. 鏡像を作る
   - 到達点を鏡の直線で反転させた位置に、鏡像を考える。
