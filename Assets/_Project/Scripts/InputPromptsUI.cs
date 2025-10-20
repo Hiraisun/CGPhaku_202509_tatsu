@@ -11,22 +11,22 @@ public class InputPromptsUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI MiddleClickPromptText;
     [SerializeField] private TextMeshProUGUI RightClickPromptText;
 
-    public void SetInputPrompts(PlacementState state){
+    public void SetInputPrompts(ControlState state){
         switch (state){
-            case PlacementState.Idle:
+            case ControlState.Mirror_Idle:
                 LeftClickPrompt.SetActive(true);
                 LeftClickPromptText.text = "ミラー位置決定";
                 MiddleClickPrompt.SetActive(false);
                 RightClickPrompt.SetActive(false);
                 break;
-            case PlacementState.MirrorPlacing:
+            case ControlState.Mirror_Placing:
                 LeftClickPrompt.SetActive(true);
                 LeftClickPromptText.text = "配置確定";
                 MiddleClickPrompt.SetActive(false);
                 RightClickPrompt.SetActive(true);
                 RightClickPromptText.text = "キャンセル";
                 break;
-            case PlacementState.Disabled:
+            case ControlState.Disabled:
                 LeftClickPrompt.SetActive(false);
                 MiddleClickPrompt.SetActive(false);
                 RightClickPrompt.SetActive(false);

@@ -2,19 +2,22 @@ using UnityEngine;
 using System.Collections.Generic;
 using EditorAttributes;
 
-/// <summary>
-/// 鏡配置状態の列挙型
-/// </summary>
-public enum PlacementState
+public enum ControlState
 {
     Disabled,       // 操作無効,演出中など
-    Idle,           // 操作有効,待機中
-    MirrorPlacing,  // 鏡配置中 (新規配置 or 方向変更)
+    // 鏡モード
+    Mirror_Idle,     // 待機中
+    Mirror_Placing,  // 位置決定済、方向選択中
+    // 直線描画モード
+    Ruler_Idle,      // 待機中
+    Ruler_Placing,   // 始点決定済、終点選択中
+    // 円描画モード
+    Compass_Idle,    // 待機中
+    Compass_Placing, // 中心点決定済
+    Compass_Radius,  // 描画中
+
 }
 
-/// <summary>
-/// 鏡配置システム - プラットフォーム非依存
-/// </summary>
 public class MirrorPlacer : MonoBehaviour
 {
     [Header("Configuration")]
@@ -33,8 +36,7 @@ public class MirrorPlacer : MonoBehaviour
     private List<GameObject> placedMirrors = new List<GameObject>();
     
     // 配置状態管理
-    
-    private PlacementState currentState;
+    private ControlState currentState;
     private Vector2 placementPosition; // 設置中の位置（ワールド座標）
     private GameObject previewMirrorObject;
 
@@ -49,43 +51,43 @@ public class MirrorPlacer : MonoBehaviour
         // プレビュー鏡、未使用時は遠くに置いておく
         previewMirrorObject = Instantiate(mirrorPreviewPrefab, new Vector3(100, 100, 0), Quaternion.identity);
 
-        currentState = PlacementState.Idle;
+        currentState = ControlState.Mirror_Idle;
         inputPromptsUI.SetInputPrompts(currentState);
     }
 
     public void DisablePlacement()
     {
-        currentState = PlacementState.Disabled;
+        currentState = ControlState.Disabled;
         inputPromptsUI.SetInputPrompts(currentState);
     }
     
     void Update()
     {
-        if (Input.GetMouseButtonDown(0)){
+        if (Input.GetMouseButtonDown(0)){ // 左クリック : 鏡位置決定、方向選択
             Vector2 position = mainCamera.ScreenToWorldPoint(Input.mousePosition);
 
-            if (currentState == PlacementState.Idle)
+            if (currentState == ControlState.Mirror_Idle)
             {
-                currentState = PlacementState.MirrorPlacing;
+                currentState = ControlState.Mirror_Placing;
                 inputPromptsUI.SetInputPrompts(currentState);
                 // 位置決定
                 placementPosition = position;
                 previewMirrorObject.transform.position = position;
                 OnPositionSet?.Invoke();
             }
-            else if (currentState == PlacementState.MirrorPlacing){ // 配置確定----------------
+            else if (currentState == ControlState.Mirror_Placing){ // 配置確定----------------
                 // 状態をリセット
-                currentState = PlacementState.Idle;
+                currentState = ControlState.Mirror_Idle;
                 inputPromptsUI.SetInputPrompts(currentState);
                 // 実際の鏡を作成
                 PlaceMirror(placementPosition, position);
                 OnMirrorPlaced?.Invoke();
                 
             }
-        }else if (Input.GetMouseButtonDown(1)){
-            if (currentState == PlacementState.MirrorPlacing)
+        }else if (Input.GetMouseButtonDown(1)){ // 右クリック : キャンセル操作など
+            if (currentState == ControlState.Mirror_Placing)
             {
-                currentState = PlacementState.Idle;
+                currentState = ControlState.Mirror_Idle;
                 inputPromptsUI.SetInputPrompts(currentState);
                 previewMirrorObject.transform.position = new Vector3(100, 100, 0);
                 OnPlacementCancelled?.Invoke();
@@ -93,7 +95,7 @@ public class MirrorPlacer : MonoBehaviour
         }
 
         // ホログラムミラー追従
-        if (currentState == PlacementState.MirrorPlacing){
+        if (currentState == ControlState.Mirror_Placing){
             Vector2 position = mainCamera.ScreenToWorldPoint(Input.mousePosition);
             Quaternion rotation = CalculateMirrorRotation(placementPosition, position);
             previewMirrorObject.transform.rotation = rotation;
@@ -115,6 +117,18 @@ public class MirrorPlacer : MonoBehaviour
         Vector2 dir = to - from;
         float rotation = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
         return Quaternion.Euler(0, 0, rotation);
+    }
+
+
+
+    public void Button_Mirror(){
+
+    }
+    public void Button_Ruler(){
+
+    }
+    public void Button_Compass(){
+
     }
     
     
