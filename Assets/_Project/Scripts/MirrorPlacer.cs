@@ -66,22 +66,22 @@ public class MirrorPlacer : MonoBehaviour
         if (Input.GetMouseButtonDown(0)){ // 左クリック : 鏡位置決定、方向選択
             Vector2 position = mainCamera.ScreenToWorldPoint(Input.mousePosition);
 
-            if (currentState == ControlState.Mirror_Idle)
-            {
+            if (currentState == ControlState.Mirror_Idle){
                 currentState = ControlState.Mirror_Placing;
                 inputPromptsUI.SetInputPrompts(currentState);
                 // 位置決定
                 placementPosition = position;
                 previewMirrorObject.transform.position = position;
                 OnPositionSet?.Invoke();
-            }
-            else if (currentState == ControlState.Mirror_Placing){ // 配置確定----------------
+            }else if (currentState == ControlState.Mirror_Placing){ // 配置確定----------------
                 // 状態をリセット
                 currentState = ControlState.Mirror_Idle;
                 inputPromptsUI.SetInputPrompts(currentState);
                 // 実際の鏡を作成
                 PlaceMirror(placementPosition, position);
                 OnMirrorPlaced?.Invoke();
+                
+            }else if(currentState == ControlState.Ruler_Placing){
                 
             }
         }else if (Input.GetMouseButtonDown(1)){ // 右クリック : キャンセル操作など
@@ -122,13 +122,16 @@ public class MirrorPlacer : MonoBehaviour
 
 
     public void Button_Mirror(){
-
+        currentState = ControlState.Mirror_Idle;
+        inputPromptsUI.SetInputPrompts(currentState);
     }
     public void Button_Ruler(){
-
+        currentState = ControlState.Ruler_Idle;
+        inputPromptsUI.SetInputPrompts(currentState);
     }
     public void Button_Compass(){
-
+        currentState = ControlState.Compass_Idle;
+        inputPromptsUI.SetInputPrompts(currentState);
     }
     
     

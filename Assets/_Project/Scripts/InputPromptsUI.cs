@@ -31,6 +31,9 @@ public class InputPromptsUI : MonoBehaviour
                 MiddleClickPrompt.SetActive(false);
                 RightClickPrompt.SetActive(false);
                 break;
+            default:
+                Debug.LogWarning("InputPromptsUI: 未実装   " + state);
+                break;
         }
     }
 }
