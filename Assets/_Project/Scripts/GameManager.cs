@@ -5,7 +5,27 @@ using UnityEngine;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
+    // シングルトンインスタンス
+    private static GameManager _instance;
+    // getter property
+    public static GameManager Instance {
+        get {
+            // インスタンスがまだ存在しない(未登録)場合
+            if (_instance == null) {
+                // シーン内の既存オブジェクトを探す
+                _instance = FindFirstObjectByType<GameManager>();
+
+                // それでも見つからない場合 -> 自動生成
+                if (_instance == null) {
+                    GameObject singletonObject = new(typeof(GameManager).Name);
+                    _instance = singletonObject.AddComponent<GameManager>();
+                }
+
+                DontDestroyOnLoad(_instance.gameObject);
+            }
+            return _instance;
+        }
+    }
     
     #region Game State
     public enum GameState { Playing, Menu }
@@ -13,34 +33,12 @@ public class GameManager : MonoBehaviour
     public int currentDifficulty = 1;
     #endregion
     
-    #region Unity Lifecycle
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void InitReset()
-    {
-        Debug.Log("GameManager: InitReset");
-        Instance = null;
-    }
-
-    void Awake()
-    {
-        // シングルトンパターン
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
-    }
-
+    #region Lifecycle
     void OnDestroy()
     {
-        if (Instance == this)
+        if (_instance == this)
         {
-            Instance = null;
+            _instance = null;
         }
     }
     

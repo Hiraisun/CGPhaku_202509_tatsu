@@ -1984,59 +1984,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1349978065}
   m_CullTransparentMesh: 1
---- !u!1 &1366164452
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1366164453}
-  - component: {fileID: 1366164456}
-  m_Layer: 0
-  m_Name: ManagerDontDestoroy
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1366164453
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1366164452}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.1, y: -0.8, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1366164456
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1366164452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ff8fa014ed033843ab90435cea6f8fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  currentDifficulty: 1
-  maxMirrors: 5
-  pathfinder: {fileID: 1867982663}
-  mirrorPlacer: {fileID: 1867982662}
-  clearLaserProjector: {fileID: 1867982664}
-  randomStageGenerate: {fileID: 1867982665}
-  uiManager: {fileID: 1867982666}
-  testLasar: {fileID: 690232595}
-  soundPlayer: {fileID: 1867982668}
 --- !u!1 &1535204702
 GameObject:
   m_ObjectHideFlags: 0
@@ -2255,6 +2202,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1867982660}
+  - component: {fileID: 1867982669}
   - component: {fileID: 1867982663}
   - component: {fileID: 1867982662}
   - component: {fileID: 1867982661}
@@ -2506,6 +2454,26 @@ MonoBehaviour:
   startSound: {fileID: 8300000, guid: 2d18ce4a14f7a4241b94c56fc84c4bd4, type: 3}
   successSound: {fileID: 8300000, guid: dce0bf936fefd414b853a1158d12e133, type: 3}
   defeatSound: {fileID: 8300000, guid: cd6cbbee8b3db6c488b74794df642b85, type: 3}
+--- !u!114 &1867982669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27747bda2801ab44b927a5abe0535cbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InGameManager
+  maxMirrors: 5
+  pathfinder: {fileID: 0}
+  mirrorPlacer: {fileID: 0}
+  clearLaserProjector: {fileID: 0}
+  randomStageGenerate: {fileID: 0}
+  uiManager: {fileID: 0}
+  testLasar: {fileID: 0}
+  soundPlayer: {fileID: 0}
 --- !u!1 &1974835758
 GameObject:
   m_ObjectHideFlags: 0
@@ -3129,7 +3097,6 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1867982660}
-  - {fileID: 1366164453}
   - {fileID: 915971104}
   - {fileID: 690232596}
   - {fileID: 519420032}
