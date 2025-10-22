@@ -44,18 +44,6 @@ public class LightPathfinder : MonoBehaviour
     public List<Vector2> lastValidPath = new();
 
     #region Lifecycle / Entry
-    void OnEnable()
-    {
-        // ゲーム中にMirror2Dが生成された場合の検出
-        Mirror2D.OnMirrorCreated += OnMirrorCreated;
-        Mirror2D.OnMirrorDestroyed += OnMirrorDestroyed;
-    }
-    
-    void OnDisable()
-    {
-        Mirror2D.OnMirrorCreated -= OnMirrorCreated;
-        Mirror2D.OnMirrorDestroyed -= OnMirrorDestroyed;
-    }
 
     /// <summary>
     /// 現在の設定で光路探索を実行し、結果を <see cref="lastValidPath"/> に保存。
@@ -104,28 +92,6 @@ public class LightPathfinder : MonoBehaviour
             mirrors.Add(mirror);
         }
         Debug.Log($"LightPathfinder: {mirrors.Count}個のMirror2Dを自動登録しました");
-    }
-    
-    /// <summary>
-    /// Mirror2Dが生成された時のコールバック
-    /// </summary>
-    private void OnMirrorCreated(Mirror2D mirror)
-    {
-        if (!mirrors.Contains(mirror))
-        {
-            mirrors.Add(mirror);
-        }
-    }
-    
-    /// <summary>
-    /// Mirror2Dが削除された時のコールバック
-    /// </summary>
-    private void OnMirrorDestroyed(Mirror2D mirror)
-    {
-        if (mirrors.Contains(mirror))
-        {
-            mirrors.Remove(mirror);
-        }
     }
     #endregion
 

@@ -1,5 +1,4 @@
 using UnityEngine;
-using System;
 
 /// <summary>
 /// 2D の有限長ミラー（線分）を表すコンポーネント。
@@ -14,10 +13,9 @@ public class Mirror2D : MonoBehaviour
 
     public Vector2 StartPoint => transform.TransformPoint(startPointLocal);
     public Vector2 EndPoint => transform.TransformPoint(endPointLocal);
+
+    LightPathfinder pathfinder;
     
-    // イベント通知用のデリゲート
-    public static event Action<Mirror2D> OnMirrorCreated;
-    public static event Action<Mirror2D> OnMirrorDestroyed;
     
     /// <summary>
     /// 線分の法線ベクトル（向きは左右いずれか）。
@@ -27,17 +25,23 @@ public class Mirror2D : MonoBehaviour
         Vector2 normal = new Vector2(-dir.y, dir.x).normalized;
         return normal;
     }
-    
+
     void Awake()
     {
-        // オブジェクトが生成された時にイベントを発火
-        OnMirrorCreated?.Invoke(this);
+        pathfinder = FindFirstObjectByType<LightPathfinder>();
     }
     
-    void OnDestroy()
+    void OnEnable()
     {
-        // オブジェクトが削除される時にイベントを発火
-        OnMirrorDestroyed?.Invoke(this);
+        if (!pathfinder.mirrors.Contains(this))
+        {
+            pathfinder.mirrors.Add(this);
+        }
+    }
+    
+    void OnDisable()
+    {
+        pathfinder.mirrors.Remove(this);
     }
 
 
