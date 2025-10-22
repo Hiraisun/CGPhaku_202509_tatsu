@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using EditorAttributes;
 
 /// <summary>
 /// 2D におけるライトパス探索。
@@ -544,32 +545,17 @@ public class LightPathfinder : MonoBehaviour
         if (mirrors == null) mirrors = new List<Mirror2D>();
     }
 
-    #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(LightPathfinder))]
-    public class LightPathfinderEditor : UnityEditor.Editor
+    [SerializeField, Button("再探査 (FindPath 実行)")]
+    void FindPathButton()
     {
-        public override void OnInspectorGUI()
-        {
-            DrawDefaultInspector();
-
-            LightPathfinder pathfinder = (LightPathfinder)target;
-            
-            UnityEditor.EditorGUILayout.Space();
-            UnityEditor.EditorGUILayout.LabelField("操作", UnityEditor.EditorStyles.boldLabel);
-            
-            if (GUILayout.Button("再探査（FindPath 実行）"))
-            {
-                pathfinder.FindPath();
-                UnityEditor.EditorUtility.SetDirty(pathfinder);
-            }
-            
-            if (GUILayout.Button("Mirror2Dを手動で再登録"))
-            {
-                pathfinder.AutoRegisterMirrors();
-                UnityEditor.EditorUtility.SetDirty(pathfinder);
-            }
-        }
+        bool isReachable = FindPath();
+        Debug.Log($"LightPathfinder: 再探査結果 = {isReachable}");
     }
-    #endif
+
+    [SerializeField, Button("Mirror2Dを手動で再登録")]
+    void AutoRegisterMirrorsButton()
+    {
+        AutoRegisterMirrors();
+    }
     #endregion
 }

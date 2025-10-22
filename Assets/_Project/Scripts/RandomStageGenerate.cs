@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using EditorAttributes;
 
 public class RandomStageGenerate : MonoBehaviour
 {
@@ -166,27 +167,10 @@ public class RandomStageGenerate : MonoBehaviour
         }
     }
 
-    #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(RandomStageGenerate))]
-    public class RandomStageGenerateEditor : UnityEditor.Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            DrawDefaultInspector();
-            RandomStageGenerate randomStageGenerate = (RandomStageGenerate)target;
-            if (GUILayout.Button("Generate Stage1"))
-            {
-                randomStageGenerate.GenerateStage1();
-            }
-            if (GUILayout.Button("Generate Stage2"))
-            {
-                randomStageGenerate.GenerateStage2();
-            }
-            if (GUILayout.Button("Clear Stage"))
-            {
-                randomStageGenerate.ClearStage();
-            }
-        }
-    }
-    #endif
+    [SerializeField, Button("Generate Stage1")]
+    void GenerateStage1Button() => GenerateStage1();
+    [SerializeField, Button("Generate Stage2")]
+    void GenerateStage2Button() => GenerateStage2();
+    [SerializeField, Button("Clear Stage")]
+    void ClearStageButton() => ClearStage();
 }

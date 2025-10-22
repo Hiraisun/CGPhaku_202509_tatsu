@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using EditorAttributes;
 
 /// <summary>
 /// 鏡配置状態の列挙型
@@ -136,21 +137,9 @@ public class MirrorPlacer : MonoBehaviour
         placedMirrors.Clear();
     }
 
-    #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(MirrorPlacer))]
-    public class MirrorPlacerEditor : UnityEditor.Editor
+    [SerializeField, Button("Mirror全削除")]
+    void ClearAllMirrorsButton()
     {
-        public override void OnInspectorGUI()
-        {
-            DrawDefaultInspector();
-            MirrorPlacer mirrorPlacer = (MirrorPlacer)target;
-            UnityEditor.EditorGUILayout.Space();
-            if (GUILayout.Button("Mirror全削除"))
-            {
-                mirrorPlacer.ClearAllMirrors();
-                UnityEditor.EditorUtility.SetDirty(mirrorPlacer);
-            }
-        }
+        ClearAllMirrors();
     }
-    #endif
 }
