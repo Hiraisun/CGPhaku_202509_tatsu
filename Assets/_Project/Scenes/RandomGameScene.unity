@@ -298,11 +298,11 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 806835498}
+  - {fileID: 1349978066}
   - {fileID: 1535204703}
   - {fileID: 2130038714}
   - {fileID: 857325079}
   - {fileID: 2008605992}
-  - {fileID: 1349978066}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1110,7 +1110,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TestLasar
   lineRenderer: {fileID: 690232594}
   startPoint: {fileID: 1055287945}
-  pathfinder: {fileID: 1867982663}
   enableDebug: 0
 --- !u!4 &690232596
 Transform:
@@ -1932,8 +1931,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIHoverTransparency
   normalAlpha: 1
-  hoverAlpha: 0.2
-  duration: 0.1
+  hoverAlpha: 0.1
+  duration: 0.3
 --- !u!225 &1349978071
 CanvasGroup:
   m_ObjectHideFlags: 0
