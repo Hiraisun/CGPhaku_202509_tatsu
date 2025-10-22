@@ -36,6 +36,14 @@ public class GameManager : MonoBehaviour
     #endregion
     
     #region Unity Lifecycle
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void InitReset()
+    {
+        Debug.Log("GameManager: InitReset");
+        Instance = null;
+    }
+
+
     void Awake()
     {
         // シングルトンパターン
@@ -52,6 +60,11 @@ public class GameManager : MonoBehaviour
 
         // シーン読み込み完了イベントの購読
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDestroy()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
     }
     
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
