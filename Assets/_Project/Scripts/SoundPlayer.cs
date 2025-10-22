@@ -17,31 +17,37 @@ public class SoundPlayer : MonoBehaviour
     {
         audioSource = GetComponent<AudioSource>();
 
-        GameManager.Instance.mirrorPlacer.OnPositionSet += OnPositionSet;
-        GameManager.Instance.mirrorPlacer.OnMirrorPlaced += OnMirrorPlaced;
-        GameManager.Instance.mirrorPlacer.OnPlacementCancelled += OnPlacementCancelled;
-        GameManager.Instance.OnStateChanged += OnStateChanged;
+        InGameManager.Instance.mirrorPlacer.OnPositionSet += OnPositionSet;
+        InGameManager.Instance.mirrorPlacer.OnMirrorPlaced += OnMirrorPlaced;
+        InGameManager.Instance.mirrorPlacer.OnPlacementCancelled += OnPlacementCancelled;
+        InGameManager.Instance.OnStateChanged += OnStateChanged;
+        
+        // ゲーム開始時の効果音を再生
+        OnStart();
     }
 
     void OnDestroy()
     {
-        GameManager.Instance.mirrorPlacer.OnPositionSet -= OnPositionSet;
-        GameManager.Instance.mirrorPlacer.OnMirrorPlaced -= OnMirrorPlaced;
-        GameManager.Instance.mirrorPlacer.OnPlacementCancelled -= OnPlacementCancelled;
-        GameManager.Instance.OnStateChanged -= OnStateChanged;
+        if (InGameManager.Instance != null)
+        {
+            InGameManager.Instance.mirrorPlacer.OnPositionSet -= OnPositionSet;
+            InGameManager.Instance.mirrorPlacer.OnMirrorPlaced -= OnMirrorPlaced;
+            InGameManager.Instance.mirrorPlacer.OnPlacementCancelled -= OnPlacementCancelled;
+            InGameManager.Instance.OnStateChanged -= OnStateChanged;
+        }
     }
 
-    private void OnStateChanged(GameManager.GameState state){
+    private void OnStateChanged(InGameManager.InGameState state){
         switch (state){
-            case GameManager.GameState.Playing:
+            case InGameManager.InGameState.Playing:
                 OnStart();
                 break;
-            case GameManager.GameState.Success:
+            case InGameManager.InGameState.Success:
                 OnSuccess();
                 break;
-            case GameManager.GameState.Defeat:
-                    OnDefeat();
-                    break;
+            case InGameManager.InGameState.Defeat:
+                OnDefeat();
+                break;
         }
     }
 
