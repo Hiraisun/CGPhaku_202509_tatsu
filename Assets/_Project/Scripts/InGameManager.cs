@@ -88,6 +88,7 @@ public class InGameManager : MonoBehaviour
         // 初期化
         mirrorPlacer.Initialize();
         soundPlayer.Initialize();
+        testLasar.Initialize();
         uiManager.UpdateDifficultyText(GameManager.Instance.currentDifficulty);
         uiManager.UpdateMirrorCountText(maxMirrors);
 

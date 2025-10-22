@@ -5,7 +5,6 @@ public class TestLasar : MonoBehaviour
 {
     [SerializeField] private LineRenderer lineRenderer;
     [SerializeField] private Transform startPoint;
-    [SerializeField] private LightPathfinder pathfinder;
 
     [Header("Debug")]
     public bool enableDebug = false;
@@ -17,10 +16,10 @@ public class TestLasar : MonoBehaviour
     // 数値安定用の閾値
     private const float EPS_PARALLEL = 1e-9f;
 
-    void Start()
+    public void Initialize()
     {
-        obstacleLayerMask = pathfinder.obstacleLayerMask;
-        mirrorsLayerMask = pathfinder.mirrorsLayerMask;
+        obstacleLayerMask = InGameManager.Instance.pathfinder.obstacleLayerMask;
+        mirrorsLayerMask = InGameManager.Instance.pathfinder.mirrorsLayerMask;
     }
 
     void Update()
@@ -55,7 +54,7 @@ public class TestLasar : MonoBehaviour
             Vector2 closestIntersection = Vector2.zero;
             float closestDistance = float.MaxValue;
 
-            foreach (Mirror2D mirror in pathfinder.mirrors)
+            foreach (Mirror2D mirror in InGameManager.Instance.pathfinder.mirrors)
             {
                 if (LineSegmentIntersection(currentPos, currentPos + currentDir * 1000f, 
                     mirror.StartPoint, mirror.EndPoint, out Vector2 intersection))

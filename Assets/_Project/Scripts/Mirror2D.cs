@@ -13,9 +13,6 @@ public class Mirror2D : MonoBehaviour
 
     public Vector2 StartPoint => transform.TransformPoint(startPointLocal);
     public Vector2 EndPoint => transform.TransformPoint(endPointLocal);
-
-    LightPathfinder pathfinder;
-    
     
     /// <summary>
     /// 線分の法線ベクトル（向きは左右いずれか）。
@@ -25,23 +22,21 @@ public class Mirror2D : MonoBehaviour
         Vector2 normal = new Vector2(-dir.y, dir.x).normalized;
         return normal;
     }
-
-    void Awake()
-    {
-        pathfinder = FindFirstObjectByType<LightPathfinder>();
-    }
     
     void OnEnable()
     {
-        if (!pathfinder.mirrors.Contains(this))
+        if (!InGameManager.Instance.pathfinder.mirrors.Contains(this))
         {
-            pathfinder.mirrors.Add(this);
+            InGameManager.Instance.pathfinder.mirrors.Add(this);
         }
     }
     
     void OnDisable()
     {
-        pathfinder.mirrors.Remove(this);
+        if (InGameManager.Instance != null)
+        {
+            InGameManager.Instance.pathfinder.mirrors.Remove(this);
+        }
     }
 
 
