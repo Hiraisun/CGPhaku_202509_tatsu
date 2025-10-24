@@ -2,10 +2,13 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using EditorAttributes;
+using System;
 
 public class BlueprintManager : MonoBehaviour
 {
     // 線分データ構造
+    [Serializable]  
     public struct LineSegment
     {
         public Vector2 start;
@@ -13,6 +16,7 @@ public class BlueprintManager : MonoBehaviour
     }
 
     // 円弧データ構造
+    [Serializable]
     public struct ArcData
     {
         public Vector2 center;
@@ -24,8 +28,8 @@ public class BlueprintManager : MonoBehaviour
     [SerializeField] private Material lineMaterial;
 
     // 保持するデータリスト
-    private List<LineSegment> lines = new();
-    private List<ArcData> arcs = new();
+    [SerializeField, DataTable]private List<LineSegment> lines = new();
+    [SerializeField, DataTable]private List<ArcData> arcs = new();
 
     void Start(){
         lines.Add(new LineSegment{start = new Vector2(-1, -1), end = new Vector2(1, 1)});
@@ -53,6 +57,25 @@ public class BlueprintManager : MonoBehaviour
                 start = (Vector2)worldStart,
                 end = (Vector2)worldEnd
             });
+        }
+    }
+
+    bool isDrawing = false;
+    Vector2 startPoint;
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if(isDrawing)
+            {
+                AddLine(startPoint, Input.mousePosition);
+                isDrawing = false;
+            }
+            else
+            {
+                startPoint = Input.mousePosition;
+                isDrawing = true;
+            }
         }
     }
 

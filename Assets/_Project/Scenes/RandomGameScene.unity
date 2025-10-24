@@ -575,7 +575,6 @@ RectTransform:
   - {fileID: 2130038714}
   - {fileID: 857325079}
   - {fileID: 2008605992}
-  - {fileID: 1349978066}
   - {fileID: 470980453}
   - {fileID: 1017904922}
   - {fileID: 1243254704}
@@ -3014,8 +3013,8 @@ GameObject:
   - component: {fileID: 1867982660}
   - component: {fileID: 1867982669}
   - component: {fileID: 1867982663}
+  - component: {fileID: 1867982670}
   - component: {fileID: 1867982662}
-  - component: {fileID: 1867982669}
   - component: {fileID: 1867982664}
   - component: {fileID: 1867982665}
   - component: {fileID: 1867982666}
@@ -3271,6 +3270,21 @@ MonoBehaviour:
   uiManager: {fileID: 0}
   testLasar: {fileID: 0}
   soundPlayer: {fileID: 0}
+--- !u!114 &1867982670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867982659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b949bbb18d5cf244e8284a11f24bd110, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlueprintManager
+  lineMaterial: {fileID: 2100000, guid: 24fcdd76bc6fcd24bad5f967b5a9b750, type: 2}
+  lines: []
+  arcs: []
 --- !u!1 &1974835758
 GameObject:
   m_ObjectHideFlags: 0
